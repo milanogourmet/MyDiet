@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -892,7 +892,7 @@ function render(){
   }
   const nav = document.getElementById("tabs");
   nav.innerHTML = "";
-  [["sost","Sostituisci","sost"],["pasto","Pasto","pasto"],["eti","Etichetta","eti"],["piano","Piano","piano"]].forEach(([id, lab, ic]) => {
+  [["piano","Piano","piano"],["pasto","Pasto","pasto"],["eti","Etichetta","eti"],["sost","Sostituisci","sost"]].forEach(([id, lab, ic]) => {
     nav.appendChild(el("button", { type:"button", "aria-current": S.tab === id ? "page" : null, onclick(){ S.tab = id; S.modale = null; render(); } }, [svg(ic, 26), el("span", { text: lab })]));
   });
   window.scrollTo(0, 0);
