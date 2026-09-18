@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sostituzioni">
+<meta name="theme-color" content="#EEF1EC">
+<title>Sostituzioni alimenti</title>
+<style>
+:root{
+ --bg:#EEF1EC; --card:#FFFFFF; --ink:#14201A; --ink2:#56635C; --line:#DCE2DB; --fill:#E9EDE7; --track:#DCE2DB;
+ --ok:#1D6B48; --okbg:#D5EBDD; --no:#B42318; --nobg:#FBE3E0; --warn:#875700; --warnbg:#F6EAD0; --btn:#1D6B48; --bar:#F7F9F6;
+ --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Helvetica Neue",sans-serif;
+ --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+ :root:not([data-theme="light"]){
+  --bg:#0E1411; --card:#18201B; --ink:#E8EEEA; --ink2:#A2AEA7; --line:#2A342E; --fill:#222B25; --track:#303B34;
+  --ok:#5CC795; --okbg:#1B4130; --no:#FF7A6B; --nobg:#3D1D1A; --warn:#E2B55E; --warnbg:#3A2E14; --btn:#237A52; --bar:#131A16;
+ }
+}
+:root[data-theme="dark"]{
+ --bg:#0E1411; --card:#18201B; --ink:#E8EEEA; --ink2:#A2AEA7; --line:#2A342E; --fill:#222B25; --track:#303B34;
+ --ok:#5CC795; --okbg:#1B4130; --no:#FF7A6B; --nobg:#3D1D1A; --warn:#E2B55E; --warnbg:#3A2E14; --btn:#237A52; --bar:#131A16;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--ui);-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto;padding:20px 16px 24px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:32px;line-height:38px;font-weight:700;letter-spacing:.2px}
+h2{margin:0;font-size:17px;line-height:22px;font-weight:600}
+h3{margin:0;font-size:15px;line-height:20px;font-weight:600;color:var(--ink2)}
+p{margin:0}
+.sub{font-size:15px;line-height:20px;color:var(--ink2)}
+.small{font-size:13px;line-height:18px;color:var(--ink2)}
+.card{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+button{font-family:var(--ui);font-size:15px;cursor:pointer}
+.btn{height:50px;border:0;border-radius:14px;background:var(--btn);color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn[disabled]{opacity:.5}
+.btn2{height:50px;border:0;border-radius:14px;background:var(--fill);color:var(--ok);font-size:17px;font-weight:600}
+.mini{height:44px;padding:0 14px;border:0;border-radius:12px;background:var(--fill);color:var(--ok);font-weight:600}
+input,select,textarea{font-family:var(--ui);font-size:17px;height:48px;border:0;border-radius:12px;background:var(--fill);color:var(--ink);padding:0 14px;width:100%}
+textarea{height:auto;padding:12px 14px;line-height:22px}
+label{font-size:13px;line-height:18px;color:var(--ink2)}
+.row{display:flex;align-items:center;gap:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px;border-radius:14px;background:var(--fill);align-items:center}
+.chip{display:flex;align-items:center;gap:6px;height:44px;padding:0 0 0 12px;border-radius:11px;background:var(--card);font-size:15px;font-weight:600;white-space:nowrap;max-width:100%}
+.chip span.g{font-weight:500;color:var(--ink2)}
+.chip button{width:40px;height:44px;border:0;background:transparent;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0}
+.chips input{background:transparent;flex:1 1 150px;min-width:140px;height:44px;padding:0 8px}
+.seg{display:grid;gap:4px;padding:4px;border-radius:13px;background:var(--fill)}
+.seg button{height:44px;border:0;border-radius:10px;background:transparent;color:var(--ink);font-weight:500;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.val{display:flex;flex-direction:column;gap:2px}
+.val b{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:22px;line-height:26px;font-weight:600}
+.val span{font-size:12px;line-height:16px;color:var(--ink2)}
+.gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:12px}
+.gauge{display:flex;flex-direction:column;gap:6px}
+.gauge .lab{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px;color:var(--ink2)}
+.gauge .lab b{font-family:var(--num);font-size:15px;font-weight:600}
+.track{position:relative;height:8px;border-radius:4px;background:var(--track)}
+.track i{position:absolute;left:25%;width:50%;top:0;bottom:0;border-radius:4px;background:var(--okbg)}
+.track u{position:absolute;top:-3px;left:50%;width:2px;height:14px;margin-left:-1px;background:var(--ink2);border-radius:1px}
+.track s{position:absolute;top:-4px;width:16px;height:16px;margin-left:-8px;border-radius:8px;border:3px solid var(--card)}
+.tag{padding:2px 8px;border-radius:10px;font-size:12px;line-height:16px;font-weight:600}
+.tag.ok{background:var(--okbg);color:var(--ok)} .tag.no{background:var(--nobg);color:var(--no)} .tag.w{background:var(--warnbg);color:var(--warn)}
+.big{font-family:var(--num);font-size:28px;line-height:32px;font-weight:700;white-space:nowrap}
+.big i{font-style:normal;font-size:16px;font-weight:600;margin-left:3px}
+.plus{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--fill)}
+.fisso{border:1px solid var(--line);background:transparent}
+.list{display:flex;flex-direction:column}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;border-bottom:1px solid var(--line);padding:6px 0}
+.item:last-child{border-bottom:0}
+nav{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--bar);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:9}
+nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;color:var(--ink2);font-size:11px;font-weight:600;padding:0}
+nav button[aria-current="page"]{color:var(--ok)}
+svg{flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hide{display:none!important}
+.spin{width:18px;height:18px;border-radius:9px;border:2px solid var(--track);border-top-color:var(--ok);animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;font-size:13px;line-height:18px;font-weight:600}
+.banner.w{background:var(--warnbg);color:var(--warn)} .banner.no{background:var(--nobg);color:var(--no)} .banner.ok{background:var(--okbg);color:var(--ok)}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="tabs"></nav>
+
+<script>
+"use strict";
+/* ---------- dati ---------- */
+const DB = [["\"|Caramelle tipo \"\"mou\"\"|\"",430.0,2.1,71.1,17.2],["Acciuga o alice",96.0,16.8,1.5,2.6],["Acciuga o alice, sott'olio",206.0,25.9,0.2,11.3],["Acciuga o alice, sotto sale",137.0,25.0,2.3,3.1],["Aglio",53.0,8.4,1.0,0.8],["Aglio Bianco Piacentino",47.0,7.2,0.9,0.6],["Aglio Rosso di Castelliri",52.0,8.9,1.02,0.5],["Aglio Rosso di Procerno",57.0,8.9,1.0,0.9],["Aglio Rosso di Sulmona",58.0,8.7,1.0,1.3],["Agnello, coscio, cotto, al forno",118.0,23.0,0.0,2.9],["Agnello, coscio, crudo",102.0,20.0,0.0,2.5],["Agnello, costoletta, cotto, al forno",118.0,22.7,0.0,3.0],["Agnello, costoletta, crudo",106.0,20.4,0.0,2.7],["Agnello, cotto, al forno",199.0,25.0,0.0,11.0],["Agnello, crudo",159.0,20.0,0.0,8.8],["Agretti, cotti, bolliti",25.0,2.1,2.6,0.2],["Agretti, crudi",22.0,1.8,2.2,0.2],["Albicocche, disidratate",356.0,5.6,80.6,1.0],["Albicocche, fresche",42.0,0.4,9.8,0.1],["Albicocche, sciroppate",65.0,0.4,16.1,0.1],["Albicocche, secche",286.0,5.0,66.5,0.5],["Alici al forno",172.0,18.2,7.1,8.0],["Alici marinate",120.0,14.2,1.4,6.4],["Amarene, fresche",44.0,0.8,10.2,0.0],["Anacardi",604.0,15.0,33.0,46.0],["Ananas, fresco",42.0,0.5,10.0,0.0],["Ananas, sciroppato",66.0,0.5,16.6,0.0],["Anatra domestica, crudo",159.0,21.4,0.0,8.2],["Anguilla d'allevamento, filetti",237.0,16.2,0.5,18.9],["Anguilla di fiume",261.0,11.8,0.1,23.7],["Anguilla di mare",237.0,14.6,0.7,19.6],["Anguilla, affumicata",231.0,17.5,0.2,17.8],["Anguilla, marinata",259.0,14.8,0.6,21.9],["Animelle di bovini",304.0,11.5,0.1,28.6],["Animelle di bovini, cotte",434.0,16.4,0.2,40.9],["Anona, fresca",73.0,1.8,15.8,0.2],["Arachidi, tostate",620.0,29.0,8.5,50.0],["Aragosta",85.0,16.0,1.0,1.9],["Aragosta, bollita",86.0,16.2,1.0,1.9],["Arance Moro, fresche",42.0,0.7,9.0,0.2],["Arance Sanguinello, fresche",47.0,0.7,10.6,0.1],["Arance Tarocco, fresche",45.0,0.7,10.0,0.2],["Arance Valencia, fresche",39.0,0.7,8.0,0.3],["Arance Washington Navel, fresche",44.0,1.0,9.4,0.2],["Arance bionde succo, fresco",38.0,0.5,9.6,0.0],["Arance bionde, fresche",45.0,0.7,9.9,0.2],["Arance rosse succo, fresco",39.0,0.5,9.8,0.0],["Arance rosse, fresche",45.0,0.7,9.9,0.2],["Arance succo, fresco",33.0,0.5,8.2,0.0],["Arance, fresche",37.0,0.7,7.8,0.2],["Aranciata",38.0,0.1,10.0,0.0],["Aringa",216.0,16.5,0.0,16.7],["Aringa, affumicata",194.0,19.9,0.0,12.7],["Aringa, marinata",199.0,18.3,0.0,14.0],["Aringa, sotto sale",218.0,19.8,0.0,15.4],["Asparagi di bosco, crudi",40.0,4.6,4.0,0.2],["Asparagi di campo, cotti, bolliti",34.0,3.8,3.4,0.2],["Asparagi di campo, crudi",33.0,3.6,3.3,0.2],["Asparagi di serra, crudi",28.0,3.0,3.0,0.1],["Avocado, fresco",238.0,4.4,1.8,23.0],["Baba' al rhum",288.0,5.9,41.2,5.7],["Babaco, fresco",24.0,0.7,4.5,0.2],["Baccalà alla vicentina",520.0,21.5,0.3,47.9],["Banane, fresche",76.0,1.2,17.4,0.3],["Barbabietole rosse, cotte, bollite",43.0,2.1,7.8,0.0],["Barbabietole rosse, crude",25.0,1.1,4.0,0.0],["Barretta al cocco ricoperta di cioccolato, industriale",472.0,4.8,58.2,26.1],["Basilico, fresco",42.0,3.1,5.2,0.8],["Bastoncini di crusca di frumento",301.0,14.0,38.4,3.2],["Besciamella",139.0,3.9,9.5,9.5],["Bevanda alcolica, Aperitivo a base di vino",186.0,0.0,17.0,0.0],["Bevanda alcolica, Birra chiara",34.0,0.2,3.5,0.0],["Bevanda alcolica, Brandy",230.0,0.0,0.0,0.0],["Bevanda alcolica, Grappa",242.0,0.0,0.0,0.0],["Bevanda alcolica, Liquori da dessert",314.0,0.0,31.1,0.0],["Bevanda alcolica, Marsala all'uovo",150.0,0.0,12.4,0.0],["Bevanda alcolica, Marsala tipico",203.0,0.0,28.0,0.0],["Bevanda alcolica, Spumante",87.0,0.0,0.6,0.0],["Bevanda alcolica, Vermouth dolce",139.0,0.0,13.9,0.0],["Bevanda alcolica, Vermouth secco",121.0,0.0,4.0,0.0],["Bevanda alcolica, Vino da pasto bianco",70.0,0.0,0.0,0.0],["Bevanda alcolica, Vino da pasto rosso",75.0,0.0,0.0,0.0],["Bevanda alcolica, Whisky",245.0,0.0,0.0,0.0],["Bevanda tipo cola",39.0,0.0,10.5,0.0],["Bieta, cotta, al microonde",15.0,1.3,1.8,0.1],["Bieta, cotta, bollita",18.0,1.5,2.1,0.1],["Bieta, cruda",15.0,1.3,1.8,0.1],["Biscotti, alla soia",375.0,11.5,70.8,6.1],["Biscotti, frollini",426.0,7.2,71.7,13.8],["Biscotti, integrali",419.0,7.8,70.8,12.3],["Biscotti, integrali, con soia",464.0,11.5,60.4,20.4],["Biscotti, secchi",404.0,6.6,80.4,7.9],["Biscotti, wafers",452.0,7.1,76.2,15.0],["Boga",87.0,18.3,0.8,1.2],["Bottarga, cefalo muggine",405.0,43.5,0.0,25.7],["Bovino adulto o vitellone, copertina di sotto, copertina di spalla,",132.0,20.3,0.0,5.7],["Bovino adulto o vitellone, costata, crudo",140.0,21.3,0.0,6.1],["Bovino adulto o vitellone, fesa, crudo",103.0,21.8,0.0,1.8],["Bovino adulto o vitellone, filetto, crudo",127.0,20.5,0.0,5.0],["Bovino adulto o vitellone, geretto anteriore e posteriore, crudo",112.0,20.9,0.0,3.2],["Bovino adulto o vitellone, girello, crudo",110.0,21.3,0.0,2.8],["Bovino adulto o vitellone, lombata, crudo",134.0,21.8,0.0,5.2],["Bovino adulto o vitellone, noce, crudo",106.0,21.3,0.0,2.3],["Bovino adulto o vitellone, pancia, biancostato e punta di petto,",171.0,19.7,0.0,10.2],["Bovino adulto o vitellone, scamone, crudo",119.0,21.4,0.0,3.7],["Bovino adulto o vitellone, sottofesa, crudo",111.0,22.0,0.0,2.6],["Bovino adulto o vitellone, spalla, muscolo, girello e fesone, crudo",108.0,21.5,0.0,2.4],["Bovino adulto o vitellone, tagli anteriori, crudo",145.0,20.5,0.0,7.0],["Bovino adulto o vitellone, tagli posteriori, crudo",117.0,21.5,0.0,3.4],["Brasato al Barolo",108.0,13.8,0.3,5.6],["Bresaola della Valtellina IGP",152.0,33.1,0.4,2.0],["Brie",320.0,19.3,0.2,26.9],["Broccoletti di rapa, cotti, bolliti",29.0,3.1,2.1,0.3],["Broccoletti di rapa, crudi",28.0,2.9,2.0,0.3],["Broccolo a testa, cotto, bollito",34.0,3.1,3.2,0.4],["Broccolo a testa, crudo",33.0,3.0,3.1,0.4],["Bufalo, solo tessuto muscolare, crudo",98.0,22.0,0.0,1.1],["Burrini",527.0,22.1,4.1,47.0],["Burro",758.0,0.8,1.1,83.4],["Burro d'arachidi",625.0,24.9,8.0,53.7],["Butirro calabro",449.0,24.7,0.3,38.8],["Cacao amaro, in polvere",355.0,20.4,11.5,25.6],["Caciocavallo",431.0,35.7,2.3,31.1],["Cacioricotta di capra",182.0,11.9,1.5,14.3],["Caciotta mista",384.0,24.5,1.8,31.0],["Caciotta romana di pecora",364.0,27.7,2.1,27.3],["Caciotta toscana",368.0,24.6,0.8,29.6],["Caciottina fresca",263.0,17.3,0.5,21.3],["Caciottina mista",370.0,26.9,1.5,28.5],["Caciottina vaccina",324.0,21.1,3.0,25.4],["Caffe' tostato",287.0,10.4,28.5,15.4],["Calamaro",68.0,12.6,0.6,1.7],["Calamaro surgelato",68.0,13.1,0.6,1.5],["Camembert",307.0,20.9,0.2,24.7],["Canditi",292.0,0.5,75.0,0.0],["Cannoli alla crema, industriale",368.0,6.2,41.9,20.7],["Cannoli siciliani",325.0,7.2,42.7,14.6],["Capitone",247.0,13.0,0.5,21.5],["Capocollo",450.0,20.8,1.4,40.2],["Capocollo di Calabria",344.0,29.1,0.9,24.9],["Capra, solo tessuto muscolare, crudo",106.0,21.2,0.0,2.3],["Capretto, crudo",113.0,19.2,0.0,4.0],["Caramelle dure",344.0,0.0,91.6,0.0],["Carciofi alla romana",85.0,2.2,1.8,5.9],["Carciofi, cotti, al microonde",34.0,2.8,2.5,0.2],["Carciofi, cotti, bolliti",44.0,3.6,3.3,0.3],["Carciofi, crudi",33.0,2.7,2.5,0.2],["Carciofi, surgelati",32.0,2.7,2.5,0.2],["Carciofo Romanesco IGP",48.0,3.0,6.1,0.2],["Carciofo, Spinoso sardo",45.0,1.9,8.9,0.2],["Carciofo, verde, precoce",45.0,2.9,5.4,0.2],["Carciofo, violetto, precoce",43.0,2.8,5.2,0.2],["Cardi, cotti, bolliti",22.0,1.0,2.9,0.2],["Cardi, crudi",13.0,0.6,1.7,0.1],["Carne bovina in gelatina, in scatola",67.0,12.6,0.0,1.8],["Carne bovina pressata, in scatola",141.0,16.5,0.0,8.3],["Carote, cotte, al microonde",41.0,1.1,7.7,0.2],["Carote, cotte, bollite",47.0,1.3,8.7,0.2],["Carote, crude",41.0,1.1,7.6,0.2],["Carpa",139.0,18.9,0.0,7.1],["Carrube",253.0,3.3,49.9,0.7],["Castagnaccio",234.0,3.4,39.3,6.8],["Castagne",174.0,2.9,36.7,1.7],["Castagne, arrostite",210.0,3.7,41.8,2.4],["Castagne, bollite",130.0,2.5,26.1,1.3],["Castagne, secche",315.0,6.0,62.0,3.4],["Cavallo, solo tessuto muscolare, crudo",106.0,23.5,0.7,1.0],["Cavallo, tessuto muscolare e grasso, crudo",143.0,19.8,0.6,6.8],["Caviale, storione",255.0,26.9,3.3,15.0],["Cavolfiore, cotto, al microonde",30.0,3.2,2.8,0.2],["Cavolfiore, cotto, bollito",31.0,3.4,2.9,0.2],["Cavolfiore, crudo",30.0,3.2,2.7,0.2],["Cavoli di Bruxelles, cotti, bolliti",53.0,4.7,4.6,0.6],["Cavoli di Bruxelles, crudi",47.0,4.2,4.2,0.5],["Cavolo broccolo verde ramoso, cotto, bollito",52.0,6.0,3.5,0.5],["Cavolo broccolo verde ramoso, crudo",30.0,3.4,2.0,0.3],["Cavolo cappuccio, rosso, crudo",22.0,1.9,2.7,0.2],["Cavolo cappuccio, verde, cotto, bollito",24.0,2.1,2.5,0.1],["Cavolo cappuccio, verde, crudo",24.0,2.1,2.5,0.1],["Cavolo verza, cotto, bollito",29.0,2.0,3.8,0.1],["Cavolo verza, cruda",29.0,2.0,3.8,0.1],["Ceci, in scatola, scolati",111.0,6.7,13.9,2.3],["Ceci, secchi",343.0,20.9,46.9,6.3],["Ceci, secchi, cotti, bolliti",132.0,7.0,18.9,2.4],["Cefalo muggine",127.0,15.8,0.7,6.8],["Cernia surgelata",88.0,17.0,0.5,2.0],["Cervello di bovini",157.0,10.0,0.8,12.7],["Cervo, solo tessuto muscolare, crudo",91.0,21.0,0.0,0.8],["Cetrioli, freschi",16.0,0.7,1.8,0.5],["Cheddar",388.0,26.7,0.5,31.0],["Cheese burger, fast food",300.0,16.3,30.2,13.1],["Chicken Nuggets, fast food",242.0,17.7,15.4,12.4],["Ciccioli",636.0,45.2,0.0,50.6],["Cicoria, da taglio, coltivata, cruda",14.0,1.2,1.7,0.1],["Cicoria, di campo, cotta, bollita",17.0,1.4,0.7,0.2],["Cicoria, di campo, cruda",17.0,1.4,0.7,0.2],["Cicoria, witloof o indivia belga, cruda",20.0,0.7,3.2,0.3],["Ciliege, candite",252.0,0.4,66.4,0.0],["Ciliege, fresche",48.0,0.8,11.0,0.1],["Cioccolato, al latte",552.0,7.3,50.5,36.3],["Cioccolato, al latte con nocciole",553.0,7.2,48.6,36.9],["Cioccolato, fondente",531.0,6.6,49.7,33.6],["Cipolle, cotte, bollite",39.0,1.4,7.8,0.1],["Cipolle, crude",28.0,1.0,5.7,0.1],["Cipolline, cotte, bollite",53.0,1.7,10.9,0.1],["Cipolline, crude",42.0,1.3,8.5,0.1],["Clementine, fresche",40.0,0.9,8.7,0.1],["Cocco, essiccato",669.0,5.6,16.4,62.0],["Cocco, fresco",358.0,3.5,4.4,35.0],["Cocktail di frutta sciroppata",59.0,0.4,14.8,0.0],["Cocomero, fresco",16.0,0.4,3.7,0.0],["Coniglio intero, crudo",118.0,19.9,0.0,4.3],["Coniglio, coscio, crudo",137.0,21.0,0.0,5.9],["Coniglio, intero surgelato, crudo",116.0,20.3,0.0,3.9],["Coniglio, intero, cotto",166.0,27.9,0.0,6.0],["Coppa",400.0,28.9,0.0,31.6],["Coratella di agnello",109.0,15.7,1.0,4.7],["Coratella di vitello",100.0,17.1,0.8,3.2],["Coregone",135.0,19.0,0.1,6.5],["Corn flakes",367.0,6.6,87.4,0.8],["Cornetti",403.0,7.2,54.7,18.3],["Corvina",88.0,20.0,0.2,0.8],["Cotechino Modena IGP, cotto",253.0,23.6,3.2,16.3],["Cotechino, confezionato precotto",449.0,17.2,0.0,42.3],["Couscous, cotto",179.0,3.6,39.7,1.1],["Couscous, crudo",361.0,13.7,76.5,1.1],["Cozza o mitilo",84.0,11.7,3.4,2.7],["Crackers, al formaggio",498.0,10.1,59.2,25.5],["Crackers, alla soia",421.0,13.1,67.7,11.7],["Crackers, integrali",402.0,12.0,61.7,11.4],["Crackers, salati",386.0,9.4,67.5,10.0],["Crema di latte, 12% di lipidi",140.0,2.8,4.4,12.5],["Crema di nocciole e cacao",537.0,6.9,58.1,32.4],["Crescenza",281.0,16.1,1.9,23.3],["Croissants",362.0,8.3,38.0,20.3],["Crostata, con crema al cacao, industriale",492.0,4.6,67.0,24.7],["Crostata, con marmellata di albicocche, industriale",421.0,0.9,71.7,16.5],["Crostata, con marmellata, industriale",339.0,4.9,65.5,8.2],["Crusca di frumento",290.0,14.1,26.6,5.5,1],["Cuore di bovini",123.0,16.8,0.5,6.0],["Cuore di bovini, cotto",189.0,25.8,0.8,9.2],["Cuore di equini",146.0,18.7,0.6,7.7],["Cuore di ovini",134.0,16.9,0.4,7.2],["Cuore di pollo",103.0,14.1,0.2,5.1],["Cuore di pollo, cotto",147.0,20.1,0.3,7.3],["Cuore di suino",159.0,18.3,0.4,9.4],["Cuore di tacchino",103.0,14.1,0.2,5.1],["Cuore di tacchino, cotto",147.0,20.1,0.3,7.3],["Dadi da brodo",250.0,15.7,5.0,18.7],["Daino, solo tessuto muscolare, crudo",95.0,21.0,0.0,1.2],["Datteri, secchi",270.0,2.7,63.1,0.6],["Dentice",101.0,16.7,0.7,3.5],["Dentice, surgelato",103.0,17.2,0.7,3.5],["Dolce verde",276.0,19.1,2.5,21.1],["Edam",326.0,25.5,1.4,24.3],["Emmenthal",403.0,28.5,3.6,30.6],["Fagiano, crudo",144.0,24.3,0.0,5.2],["Fagioli",326.0,23.6,47.5,2.0],["Fagioli dall'occhio, secchi",318.0,22.4,50.9,1.4],["Fagioli, Borlotti, freschi",143.0,10.2,22.7,0.8],["Fagioli, Borlotti, freschi, cotti, bolliti",78.0,5.7,11.2,0.5],["Fagioli, Borlotti, in scatola, scolati",102.0,6.7,15.9,0.5],["Fagioli, Borlotti, secchi",312.0,20.2,47.7,2.0],["Fagioli, Borlotti, secchi, cotti, bolliti",106.0,6.9,16.4,0.4],["Fagioli, Cannellini in scatola, scolati",86.0,6.0,12.5,0.6],["Fagioli, Cannellini, secchi",314.0,23.4,45.5,1.6],["Fagioli, Cannellini, secchi, cotti, bolliti",107.0,8.0,14.9,0.4],["Fagioli, cotti, bolliti",117.0,7.9,17.0,0.7],["Fagiolini a corallo, cotti, bolliti",31.0,1.7,4.6,0.1],["Fagiolini, freschi",24.0,2.1,2.4,0.1],["Fagiolini, surgelati, cotti, bolliti",31.0,1.7,4.6,0.1],["Falafel",198.0,7.1,19.8,9.5],["Faraona, coscio, con pelle, crudo",133.0,24.3,0.3,3.8],["Faraona, coscio, senza pelle, cotto, allo spiedo",194.0,34.4,0.3,6.1],["Faraona, coscio, senza pelle, crudo",127.0,24.0,0.3,3.3],["Faraona, petto, senza pelle, cotto, allo spiedo",146.0,30.7,0.2,2.5],["Faraona, petto, senza pelle, crudo",121.0,25.8,0.2,1.9],["Farina d'avena",378.0,12.6,66.3,7.1],["Farina d'orzo",333.0,10.6,68.4,1.9],["Farina di castagne",318.0,6.1,62.0,3.7],["Farina di frumento, duro",330.0,12.9,63.2,2.8],["Farina di frumento, integrale",313.0,11.9,61.8,1.9],["Farina di frumento, tipo 0",321.0,11.5,69.5,1.0],["Farina di frumento, tipo 00",323.0,11.0,71.6,0.7],["Farina di mais",341.0,8.7,73.5,2.7],["Farina di manioca",332.0,0.6,87.2,0.2],["Farina di riso",332.0,7.3,79.1,0.5],["Farina di segale",342.0,11.7,67.8,2.0],["Farina di soia",469.0,36.8,23.4,23.5],["Farro perlato, cotto, bollito",178.0,6.2,37.3,1.0],["Farro perlato, crudo",353.0,14.6,69.3,2.4],["Fave, fresche",51.0,5.2,4.5,0.4],["Fave, fresche, cotte, in padella",61.0,6.1,5.3,0.5],["Fave, secche",331.0,21.3,52.8,2.1],["Fave, secche, sgusciate, cotte, bollite",146.0,11.0,22.4,1.3],["Fave, secche, sgusciate, crude",343.0,25.2,53.6,3.0],["Fecola di patate",346.0,1.4,90.7,0.0],["Fegato di bovini",142.0,20.0,5.9,4.4],["Fegato di bovini, cotto",190.0,26.7,7.9,5.9],["Fegato di equini",145.0,22.4,5.3,4.0],["Fegato di ovini",135.0,19.5,2.0,5.5],["Fegato di pollo",154.0,22.8,1.5,6.3],["Fegato di pollo, cotto",192.0,29.4,2.0,7.4],["Fegato di suini",140.0,22.8,1.5,4.8],["Fegato di suini, cotto",183.0,29.4,2.0,6.4],["Fegato di tacchino",127.0,17.8,0.5,6.0],["Fegato di tacchino, cotto",195.0,27.4,0.8,9.2],["Feijoa, fresca",59.0,0.7,9.6,0.8],["Feta",250.0,15.6,1.5,20.2],["Fette biscottate",387.0,11.3,75.0,6.0],["Fette biscottate, integrali",394.0,14.2,63.0,10.0],["Fichi d'india, freschi",63.0,0.8,13.0,0.1],["Fichi, canditi",294.0,3.5,73.7,0.2],["Fichi, freschi",63.0,0.9,14.2,0.2],["Fichi, seccati al forno e mandorlati",305.0,5.2,58.2,4.2],["Fichi, secchi",282.0,3.5,58.0,2.7],["Finocchi, cotti, al microonde",15.0,1.2,1.5,0.0],["Finocchi, cotti, bolliti",17.0,1.4,1.7,0.0],["Finocchi, crudi",15.0,1.2,1.5,0.0],["Fiocchi d'avena",367.0,8.0,66.8,7.5],["Fiocchi di formaggio magro",115.0,9.7,3.2,7.1],["Fior di latte",268.0,20.6,0.7,20.3],["Fiori di zucca, freschi",18.0,1.7,0.5,0.4],["Foglie di rapa, crude",27.0,2.6,2.8,0.1],["Fontina",361.0,24.5,0.8,28.9],["Formaggino",309.0,11.2,6.0,26.9],["Formaggino con ridotto contenuto di grasso",239.0,14.7,6.5,17.3],["Formaggio cremoso spalmabile",313.0,8.6,0.0,31.0],["Formaggio cremoso spalmabile, light",179.0,9.2,3.1,14.5],["Formaggio molle da tavola",377.0,25.4,1.0,30.2],["Fragole, fresche",30.0,0.9,5.3,0.4],["Frittata",185.0,16.1,0.0,13.4],["Frittata prosciutto cotto e formaggio",205.0,16.2,0.3,15.4],["Frumento duro",332.0,13.0,62.5,2.9],["Frumento tenero",336.0,12.3,65.2,2.6],["Frutta mista caramellata",217.0,1.9,36.0,8.0],["Funghi coltivati, pleurotes, cotti, in padella",35.0,2.6,5.3,0.4],["Funghi coltivati, pleurotes, crudi",37.0,2.2,5.6,0.3],["Funghi coltivati, prataioli, cotti, in padella",46.0,7.0,1.5,0.4],["Funghi coltivati, prataioli, crudi",24.0,3.7,0.8,0.2],["Funghi ovuli, crudi",23.0,2.0,1.6,0.3],["Funghi porcini, crudi",31.0,3.9,1.0,0.7],["Gallina, crudo",194.0,20.9,0.0,12.3],["Gamberetti con funghi e bambù",110.0,8.6,1.9,7.3],["Gamberi",71.0,13.6,2.9,0.6],["Gamberi sgusciati, surgelati",85.0,16.5,2.9,0.9],["Gateau",156.0,9.1,11.6,7.7],["Gelato confezionato, biscotto con crema, zabaione e cioccolato",271.0,5.3,49.1,7.3],["Gelato confezionato, cacao, in vaschetta",173.0,3.6,25.3,7.1],["Gelato confezionato, caffè, in vaschetta",245.0,5.1,23.9,15.0],["Gelato confezionato, cono con panna e cioccolato",291.0,5.1,34.9,15.5],["Gelato confezionato, cono con panna, scaglie di cioccolato e",326.0,4.2,33.3,20.5],["Gelato confezionato, fior di latte, in vaschetta",218.0,4.2,20.7,13.7],["Gelato confezionato, fior di latte, ricoperto di sorbetto alla fragola",101.0,1.4,21.3,1.7],["Gelato confezionato, ghiacciolo all'arancio",137.0,0.0,36.5,0.0],["Gelato confezionato, nocciola, in vaschetta",183.0,3.3,25.2,8.4],["Gelato confezionato, panna ricoperta di cioccolato fondente",316.0,4.5,28.2,21.4],["Gelato confezionato, panna, in vaschetta",189.0,3.2,27.2,8.2],["Gelato confezionato, sorbetto al limone, in vaschetta",132.0,0.9,34.2,0.0],["Gelato confezionato, stracciatella, in vaschetta",193.0,2.9,31.5,7.0],["Gelato confezionato, vaniglia, in vaschetta",167.0,2.7,25.7,6.7],["Gelato misto fritto",252.0,4.2,34.7,11.7],["Germe di frumento",378.0,26.0,43.5,10.0],["Germogli di soia",54.0,6.2,3.0,1.4],["Gnocchi al pesto alla genovese",186.0,6.4,21.7,8.4],["Gnocchi al ragù alla bolognese",175.0,8.4,15.4,9.0],["Gnocchi al sugo di pomodoro",112.0,2.5,19.4,2.8],["Gnocchi di patate, cotti",147.0,3.5,34.0,0.2],["Gnocchi di patate, crudi",164.0,3.9,37.9,0.3],["Gomme da masticare, lastrine e confetti",262.0,0.0,70.0,0.0],["Gorgonzola",324.0,19.1,1.0,27.1],["Grana Padano, DOP",392.0,33.9,0.0,28.5],["Granchio, in scatola",81.0,18.1,0.0,0.9],["Grano saraceno",329.0,12.4,61.2,3.3],["Grissini",421.0,11.3,65.1,13.9],["Groviera",417.0,30.6,1.5,32.1],["Guava, fresca",31.0,0.7,3.5,0.5],["Halibut",114.0,20.6,0.0,3.5],["Hamburger piccolo, solo carne, fast food",264.0,24.5,0.0,18.4],["Hamburger, fast food",251.0,13.1,30.1,9.1],["Hummus",168.0,6.2,9.4,11.0],["Indivia, fresca",20.0,0.9,2.7,0.3],["Involtini Primavera",238.0,3.5,21.6,15.4],["Italico",316.0,21.2,1.2,25.2],["Kebab solo carne",269.0,29.7,0.0,16.7],["Ketchup, salsa",100.0,2.1,24.0,0.0],["Kiwi, freschi",48.0,1.2,9.0,0.6],["Lamponi, freschi",49.0,1.0,6.5,0.6],["Lardo",891.0,0.0,0.0,99.0],["Lasagna",196.0,11.7,13.4,10.8],["Lattarini",145.0,14.6,0.0,9.6],["Latte di bufala",114.0,4.5,5.1,8.5],["Latte di capra",76.0,3.9,4.7,4.8],["Latte di pecora",103.0,5.3,5.2,6.9],["Latte di vacca, UHT, intero",63.0,3.3,4.7,3.6],["Latte di vacca, UHT, parzialmente scremato",46.0,3.2,5.1,1.6],["Latte di vacca, condensato, zuccherato",328.0,8.7,56.5,9.0],["Latte di vacca, evaporato, non zuccherato",134.0,7.0,8.6,8.2],["Latte di vacca, in polvere, intero",484.0,25.7,42.0,24.9],["Latte di vacca, in polvere, parzialmente scremato",418.0,28.8,50.2,12.7],["Latte di vacca, in polvere, scremato",351.0,33.1,56.2,0.9],["Latte di vacca, pastorizzato, intero",64.0,3.3,4.9,3.6],["Latte di vacca, pastorizzato, parzialmente scremato",46.0,3.5,5.0,1.5],["Latte di vacca, pastorizzato, scremato",36.0,3.6,5.3,0.2],["Latteria",456.0,30.7,1.4,36.4],["Lattuga, a cappuccio, fresca",22.0,1.5,3.0,0.2],["Lattuga, da taglio, fresca",17.0,1.1,2.2,0.1],["Lattuga, fresca",22.0,1.8,2.2,0.4],["Lattughino IV gamma, fresco",16.0,1.4,1.4,0.2],["Lattughino, fresco",16.0,1.5,1.4,0.2],["Lenti colorate ripiene di cioccolato",456.0,5.4,73.9,17.5],["Lenticchie, in scatola, scolate",91.0,5.0,15.4,0.5],["Lenticchie, secche",319.0,22.7,51.1,1.0],["Lenticchie, secche, cotte, bollite",109.0,6.9,16.3,0.4],["Lievito di birra, compresso",70.0,12.1,1.1,0.4],["Limoni, freschi",16.0,0.6,2.5,0.0],["Limoni, succo",10.0,0.2,2.5,0.0],["Lingua di bovini",232.0,17.1,0.4,18.0],["Lingua di bovini, cotta, fritta",309.0,22.8,0.5,24.0],["Litchi, freschi",72.0,1.1,17.2,0.1],["Loti o kaki, freschi",70.0,0.6,16.0,0.3],["Luccio",81.0,18.7,0.1,0.6],["Lumaca, cruda",67.0,12.9,0.0,1.7],["Lupini, ammollati",119.0,16.4,7.1,2.4],["Macadamia",751.0,8.0,5.1,76.0],["Maiale in agrodolce",233.0,8.7,17.7,14.6],["Maiale, bistecca, cotto, in padella",187.0,25.4,0.0,9.5],["Maiale, bistecca, crudo",157.0,21.3,0.0,8.0],["Maiale, coscio, crudo",110.0,20.2,0.0,3.2],["Maiale, lombo, crudo",146.0,20.7,0.0,7.0],["Maiale, pesante, coscio, crudo",127.0,20.4,0.0,5.1],["Maiale, pesante, lombo, crudo",172.0,20.8,0.0,9.9],["Maiale, pesante, spalla, crudo",156.0,19.0,0.0,8.9],["Maiale, spalla, crudo",133.0,19.0,0.0,6.3],["Maionese, artigianale",660.0,3.2,0.1,71.9],["Maionese, industriale",655.0,4.3,2.1,70.0],["Mais",357.0,9.2,75.1,3.8],["Mais, amido",328.0,0.3,87.0,0.0],["Mais, dolce, in scatola, sgocciolato",105.0,3.4,20.5,1.3],["Mandaranci, freschi",57.0,0.8,12.8,0.2],["Mandarini, freschi",76.0,0.9,17.6,0.3],["Mandorle dolci, secche",628.0,22.0,4.6,55.3],["Mango, fresco",56.0,1.0,12.6,0.2],["Margarina, 100% vegetale",760.0,0.6,0.4,84.0],["Margarina, 2/3 di grassi animali, 1/3 di grassi vegetali",760.0,0.7,0.4,84.0],["Marmellata",227.0,0.5,58.7,0.0],["Mascarpone",455.0,7.6,0.3,47.0],["Melagrane, fresche",68.0,0.5,15.9,0.2],["Melanzane, cotte, al microonde",23.0,0.8,3.0,0.4],["Melanzane, cotte, in padella",39.0,1.3,5.4,0.7],["Melanzane, crude",23.0,1.0,2.6,0.4],["Mele cotogne, fresche",38.0,0.3,6.3,0.1],["Mele, disidratate",356.0,1.3,82.2,2.0],["Mele, fresche, annurche",45.0,0.3,10.2,0.1],["Mele, fresche, con buccia",44.0,0.2,10.0,0.0],["Mele, fresche, deliziose",46.0,0.2,11.1,0.1],["Mele, fresche, golden",46.0,0.4,10.7,0.1],["Mele, fresche, granny smith",42.0,0.5,9.4,0.1],["Mele, fresche, imperatore",48.0,0.2,11.3,0.1],["Mele, fresche, renette",43.0,0.3,10.0,0.1],["Mele, fresche, senza buccia",57.0,0.3,13.7,0.1],["Melone, d'estate, fresco",34.0,0.8,7.4,0.2],["Melone, d'inverno, fresco",24.0,0.5,4.9,0.2],["Melù o pesce molo",72.0,17.4,0.0,0.3],["Melù o pesce molo, stoccafisso, ammollato",92.0,20.7,0.3,0.9],["Melù o pesce molo, stoccafisso, secco",356.0,80.1,1.1,3.5],["Menta, fresca",49.0,3.8,5.3,0.7],["Merendine, con marmellata, industriale",364.0,5.5,67.9,9.5],["Merendine, farcite con cacao, industriale",410.0,6.2,65.5,15.1],["Merendine, tipo brioche, industriale",440.0,8.2,65.7,17.6],["Merendine, tipo pan di Spagna, industriale",386.0,7.4,62.7,13.1],["Merendine, tipo pasta frolla, industriale",447.0,5.3,71.7,17.1],["Merluzzo in umido",86.0,9.7,1.7,4.3],["Merluzzo o nasello",71.0,17.0,0.0,0.3],["Merluzzo o nasello, baccalà, ammollato",95.0,21.6,0.0,1.0],["Merluzzo o nasello, baccalà, secco",131.0,29.0,0.0,1.7],["Merluzzo o nasello, bastoncini di pesce, surgelati",191.0,11.0,15.0,10.1],["Merluzzo o nasello, surgelato",75.0,17.3,0.0,0.6],["Merluzzo o nasello, surgelato, cotto, al microonde",107.0,24.8,0.0,0.9],["Merluzzo o nasello, surgelato, cotto, in forno",78.0,17.5,0.0,0.9],["Merluzzo o nasello, surgelato, filetti",68.0,15.6,0.0,0.6],["Miele",304.0,0.6,80.3,0.0],["Miglio",343.0,11.8,64.9,3.9],["Miglio, decorticato",342.0,11.0,67.8,4.2],["Milza di bovini",107.0,18.5,0.0,3.7],["Minestre in scatola, crema di asparagi",26.0,1.0,4.2,0.7],["Minestre in scatola, crema di cipolle",26.0,2.2,2.2,1.0],["Minestre in scatola, crema di funghi",56.0,1.0,4.2,4.0],["Minestre in scatola, crema di pollo",58.0,1.7,4.5,3.8],["Minestre in scatola, crema di pomodori",36.0,0.8,6.4,1.0],["Minestrone liofilizzato",298.0,10.1,47.6,8.8],["Minestrone, cotto",45.0,2.0,7.8,0.4],["Mirtilli, freschi",49.0,0.9,10.1,0.2],["Mora di rovo",42.0,1.3,8.1,0.0],["Mormora",97.0,18.0,2.0,1.9],["Mortadella Bologna IGP",288.0,15.7,0.0,25.0],["Mortadella di bovini e suini",388.0,13.3,0.5,37.0],["Mozzarella di bufala",288.0,16.7,0.4,24.4],["Mozzarella di bufala campana DOP",257.0,14.1,1.4,21.7],["Mozzarella di vacca",253.0,18.7,0.7,19.5],["Muesli",374.0,9.7,71.7,6.0],["Nachos",512.0,6.5,63.8,26.1],["Nespole, fresche",32.0,0.4,6.1,0.4],["Nocciole, secche",671.0,13.8,6.1,64.1],["Noci",589.0,10.5,5.5,57.7],["Noci pecan",723.0,7.2,7.9,71.8],["Noci, secche",702.0,14.3,5.1,68.1],["Nuvole di gamberi",559.0,0.8,57.0,38.0],["Oca, crudo",373.0,15.8,0.0,34.4],["Occhiata",117.0,19.0,2.0,3.7],["Oli vegetali",899.0,0.0,0.0,99.9],["Olio di arachide",899.0,0.0,0.0,99.9],["Olio di cocco",899.0,0.0,0.0,99.9],["Olio di colza",899.0,0.0,0.0,99.9],["Olio di fegato di merluzzo",899.0,0.0,0.0,99.9],["Olio di germe di grano",899.0,0.0,0.0,99.9],["Olio di girasole",899.0,0.0,0.0,99.9],["Olio di mais",899.0,0.0,0.0,99.9],["Olio di mandorle dolci",899.0,0.0,0.0,99.9],["Olio di oliva",899.0,0.0,0.0,99.9],["Olio di oliva extra vergine",899.0,0.0,0.0,99.9],["Olio di palma",899.0,0.0,0.0,99.9],["Olio di sesamo",899.0,0.0,0.0,99.9],["Olio di soia",899.0,0.0,0.0,99.9],["Olio di vinacciolo",899.0,0.0,0.0,99.9],["Oliva Giarraffa",192.0,1.4,0.19,20.0],["Oliva Nocellara del Belice",211.0,1.4,0.06,22.1],["Olive da tavola conservate",277.0,1.5,5.0,27.0],["Olive, nere",243.0,1.6,0.8,25.1],["Olive, verdi",148.0,0.8,1.0,15.0],["Olive, verdi, in salamoia",113.0,1.2,1.0,11.0],["Orata d'allevamento, filetti",159.0,19.7,1.2,8.4],["Orata, filetti",121.0,20.7,1.0,3.8],["Orata, surgelata",94.0,19.8,1.0,1.2],["Orzo perlato",346.0,9.4,73.7,1.5],["Orzo perlato, cotto, bollito",118.0,2.6,26.4,0.6],["Ostrica",69.0,10.2,5.4,0.9],["Pagello",101.0,21.0,0.0,1.9],["Pagello bocca d'oro",118.0,20.0,3.0,3.0],["Palombo",80.0,16.0,1.3,1.2],["Pan di Spagna",275.0,10.1,49.7,5.1],["Pancetta arrotolata",530.0,15.1,0.0,52.2],["Pancetta magretta",314.0,21.7,0.0,25.3],["Pancetta tesa",337.0,20.9,0.0,28.1],["Pane al malto",278.0,8.3,56.6,2.4],["Pane azzimo",365.0,10.7,81.7,1.0],["Pane bianco",268.0,8.1,59.5,0.5],["Pane di segale",228.0,8.3,45.4,1.7],["Pane di tipo integrale",224.0,8.5,44.1,1.3],["Pane di tipo semintegrale",239.0,8.3,52.0,0.3],["Pane formato rosetta",275.0,9.0,57.6,1.9],["Panettone",337.0,6.4,56.2,10.7],["Pangrattato",357.0,10.1,77.8,2.1],["Panini al latte",298.0,9.0,48.1,8.7],["Panini all'olio",288.0,7.7,52.6,5.8],["Panino con hamburger piccolo, fast food",254.0,15.6,29.0,8.9],["Panino, fast food",248.0,10.1,47.0,3.0],["Panna da cucina, sterilizzata, 23% di lipidi",233.0,2.7,4.0,23.0],["Panna da montare, 35% di lipidi",337.0,2.3,3.4,35.0],["Papaia, fresca",33.0,0.4,6.9,0.1],["Pappa reale",146.0,10.0,14.0,6.0],["Parmigiana di melanzane",242.0,7.0,4.0,21.0],["Parmigiano Reggiano DOP",397.0,32.4,0.0,29.7],["Passiflora, fresca",64.0,3.0,5.7,0.3,1],["Pasta aglio, olio e peperoncino",190.0,4.2,26.5,7.9],["Pasta al pesto alla genovese",175.0,6.7,21.4,7.2],["Pasta al ragù alla bolognese",168.0,8.4,16.0,8.0],["Pasta al sugo di pomodoro",113.0,3.3,19.5,2.6],["Pasta all'uovo, secca",346.0,13.0,71.0,2.4],["Pasta all'uovo, secca, cotta, bollita",123.0,4.6,25.5,0.8],["Pasta alla amatriciana",241.0,7.5,28.7,11.0],["Pasta alla carbonara",245.0,10.8,28.4,10.3],["Pasta alle vongole",157.0,6.7,28.3,2.4],["Pasta burro e parmigiano",184.0,6.0,27.3,6.1],["Pasta cacio e pepe",167.0,6.9,27.4,3.8],["Pasta di mandorle",455.0,9.9,54.6,23.4],["Pasta di semola",341.0,13.5,72.7,1.2],["Pasta di semola, cotta, bollita",175.0,6.9,37.3,0.6],["Pasta di semola, integrale",330.0,13.3,64.8,2.2],["Pasta di semola, integrale, cotta, bollita",182.0,7.4,36.0,1.2],["Pasta e fagioli",116.0,4.9,12.2,5.1],["Pasta integrale al sugo di pomodoro",132.0,4.6,21.3,3.2],["Pastiera",295.0,7.2,43.6,11.0],["Patate novelle, cotte, al microonde",72.0,2.0,15.7,0.3],["Patate novelle, cotte, bollite",68.0,1.9,14.9,0.2],["Patate novelle, crude",72.0,2.0,15.7,0.3],["Patate, con buccia, cotte, bollite",88.0,2.1,17.9,1.0],["Patate, cotte, al microonde",88.0,2.1,17.9,1.0],["Patate, cotte, arrosto",152.0,2.9,25.7,4.5],["Patate, crude",72.0,2.0,16.0,0.1],["Patate, fritte",192.0,3.9,29.9,6.7],["Patate, senza buccia, cotte, bollite",74.0,1.8,16.9,0.1],["Patatine, fritte, confezionate in busta",512.0,5.4,58.0,29.6],["Patatine, fritte, fast food",283.0,3.3,37.6,13.7],["Patè di coniglio",346.0,13.0,1.1,32.2],["Patè di fegato",341.0,12.7,1.3,31.7],["Patè di pollo",289.0,11.1,2.3,26.2],["Patè di prosciutto",358.0,11.3,1.1,34.3],["Pecora, solo tessuto muscolare, crudo",121.0,21.0,0.0,4.1],["Pecorino",404.0,28.8,0.2,32.0],["Pecorino romano",409.0,26.0,1.8,33.1],["Pecorino siciliano",427.0,28.9,2.4,33.6],["Pepe nero",311.0,11.4,49.0,3.3],["Peperoncini piccanti, freschi",30.0,1.8,3.8,0.5],["Peperoni, cotti, in padella",143.0,5.2,24.3,1.5],["Peperoni, crudi",26.0,0.9,4.2,0.3],["Peperoni, gialli, cotti, al microonde",41.0,1.1,8.1,0.2],["Peperoni, gialli, crudi",35.0,0.9,6.8,0.2],["Peperoni, rossi e gialli, crudi",35.0,0.9,6.7,0.3],["Peperoni, rossi, cotti, al microonde",42.0,1.1,7.9,0.4],["Peperoni, rossi, crudi",34.0,0.9,6.5,0.3],["Peperoni, verdi, crudi",31.0,0.7,6.0,0.2],["Pere, candite",294.0,1.0,73.9,0.4],["Pere, fresche, Abate Fetel",59.0,0.2,12.7,0.3],["Pere, fresche, Coscia",42.0,0.3,8.6,0.1],["Pere, fresche, Kaiser",48.0,0.3,9.2,0.5],["Pere, fresche, Max-Red Barlett",50.0,0.3,10.0,0.4],["Pere, fresche, William",52.0,0.3,10.2,0.5],["Pere, fresche, senza buccia",43.0,0.3,8.8,0.1],["Pesce gatto",92.0,15.5,0.2,3.3],["Pesche, disidratate",364.0,4.8,88.0,0.9],["Pesche, fresche, con buccia",28.0,0.7,5.8,0.0],["Pesche, fresche, senza buccia",30.0,0.8,6.1,0.1],["Pesche, sciroppate",56.0,0.5,14.0,0.0],["Pesche, secche",280.0,3.1,68.3,0.7],["Peschenoci, fresche",36.0,1.4,7.0,0.1],["Pesto alla genovese",250.0,11.0,1.8,21.8],["Piccione giovane, crudo",138.0,22.1,0.0,5.5],["Pinoli",604.0,31.9,4.0,50.3],["Piselli, freschi",64.0,5.5,6.5,0.6],["Piselli, freschi, cotti, in padella",104.0,9.7,11.5,1.0],["Piselli, in scatola, scolati",78.0,5.3,11.1,0.6],["Piselli, secchi",317.0,21.7,48.2,2.0],["Piselli, surgelati",61.0,5.4,6.5,0.3],["Pistacchi",629.0,18.1,8.1,56.1],["Pistacchio di Bronte DOP",595.0,24.3,7.3,48.9],["Pizza Napoletana Margherita STG",235.0,10.7,27.4,9.3],["Pizza bianca",306.0,7.9,57.9,5.9],["Pizza con pomodoro",248.0,7.6,40.7,6.6],["Pizza con pomodoro e mozzarella",255.0,12.1,35.5,7.6],["Polenta al ragù alla bolognese",114.0,4.6,12.4,5.3],["Polenta al sugo di pomodoro",73.0,1.0,14.2,1.5],["Polenta, cotta",73.0,0.9,17.8,0.04],["Polenta, cruda",323.0,8.0,72.7,0.7],["Pollo all'ananas",126.0,11.5,5.5,6.6],["Pollo alle mandorle",182.0,16.5,2.4,11.9],["Pollo, ala, con pelle, cotta, al forno",283.0,31.7,0.0,17.4],["Pollo, ala, con pelle, crudo",196.0,16.7,0.0,14.3],["Pollo, fuso, con pelle, cotto, al forno",201.0,31.2,0.0,8.5],["Pollo, fuso, con pelle, crudo",125.0,18.4,0.0,5.7],["Pollo, fuso, senza pelle, cotto, al forno",175.0,29.9,0.0,6.2],["Pollo, fuso, senza pelle, crudo",107.0,18.5,0.0,3.7],["Pollo, intero, con pelle, cotto, al forno",200.0,27.1,0.0,10.2],["Pollo, intero, con pelle, cotto, arrosto",245.0,28.3,0.0,14.7],["Pollo, intero, con pelle, crudo",171.0,19.0,0.0,10.6],["Pollo, intero, senza pelle, cotto, al forno",160.0,27.9,0.0,5.4],["Pollo, intero, senza pelle, cotto, arrosto",206.0,28.9,0.0,10.0],["Pollo, intero, senza pelle, crudo",110.0,19.4,0.0,3.6],["Pollo, petto, cotto, in padella",129.0,30.2,0.0,0.9],["Pollo, petto, crudo",100.0,23.3,0.0,0.8],["Pollo, sovracoscia, con pelle, cotto, al forno",219.0,26.7,0.0,12.5],["Pollo, sovracoscia, con pelle, crudo",196.0,17.4,0.0,14.0],["Pollo, sovracoscia, senza pelle, cotto, al forno",188.0,28.3,0.0,8.3],["Pollo, sovracoscia, senza pelle, crudo",132.0,18.7,0.0,6.3],["Polmone di bovini",75.0,14.0,0.0,2.1],["Polpo",57.0,10.6,1.4,1.0],["Pomodori al riso",93.0,2.0,14.5,2.8],["Pomodori, Nerina, rossi, freschi",21.0,1.1,2.8,0.4],["Pomodori, Nerina, verdi, freschi",21.0,0.9,2.8,0.4],["Pomodori, San Marzano, freschi",21.0,1.1,3.0,0.2],["Pomodori, conserva",100.0,3.9,20.4,0.4],["Pomodori, da insalata, freschi",19.0,1.2,2.8,0.2],["Pomodori, maturi, freschi",23.0,1.0,3.5,0.2],["Pomodori, passata",21.0,1.3,3.0,0.2],["Pomodori, pelati in scatola",22.0,1.2,3.0,0.5],["Pomodori, succo",16.0,0.8,3.0,0.0],["Pomodorini ciliegino, freschi",37.0,1.1,7.2,0.4],["Pompelmo, fresco",29.0,0.6,6.2,0.0],["Pop corn",408.0,12.0,77.9,4.2],["Porri, cotti, bolliti",35.0,2.1,5.3,0.1],["Porri, crudi",35.0,2.1,5.2,0.1],["Prezzemolo, fresco",30.0,3.7,0.0,0.6],["Prosciutto cotto",138.0,15.7,1.7,7.6],["Prosciutto cotto, alta qualità",182.0,18.0,0.8,11.9],["Prosciutto cotto, alta qualità, sgrassato",126.0,19.5,0.9,5.0],["Prosciutto cotto, scelto",155.0,17.5,0.6,9.2],["Prosciutto cotto, scelto, sgrassato",115.0,19.4,0.5,4.0],["Prosciutto cotto, sgrassato",107.0,17.0,1.9,3.5],["Prosciutto crudo DOP, di Parma",269.0,25.9,0.3,18.3],["Prosciutto crudo di Modena DOP",309.0,25.6,0.1,22.9],["Prosciutto crudo di Modena DOP, sgrassato",201.0,30.2,0.1,8.9],["Prosciutto crudo di Parma DOP, sgrassato",176.0,29.1,0.4,6.4],["Prosciutto crudo di Pietraroja",358.0,26.2,0.0,28.1],["Prosciutto crudo di San Daniele DOP",271.0,25.7,0.2,18.6],["Prosciutto crudo di San Daniele DOP, sgrassato",176.0,29.0,0.4,6.5],["Prosciutto crudo di montagna",303.0,26.2,0.0,22.0],["Prosciutto crudo, Nazionale",235.0,27.8,0.1,13.7],["Prosciutto crudo, Nazionale, sgrassato",169.0,30.5,0.3,5.1],["Prosciutto crudo, disossato",224.0,26.9,0.0,12.9],["Prosciutto crudo, disossato, sgrassato",159.0,29.3,0.0,4.6],["Prosciutto crudo, gambuccio",306.0,26.2,0.0,22.4],["Provolone",374.0,28.1,2.0,28.2],["Prugne, fresche",45.0,0.5,10.5,0.1],["Prugne, gialle",30.0,0.5,6.6,0.1],["Prugne, rosse",45.0,0.5,10.5,0.1],["Prugne, secche",236.0,2.2,55.0,0.5],["Quaglia, crudo",161.0,25.0,0.0,6.8],["Quinoa, cotta, bollita",140.0,4.8,24.3,2.5],["Quinoa, cruda",376.0,15.4,57.8,8.1],["Radicchio rosso di Treviso IGP, precoce",16.0,1.6,1.0,0.1],["Radicchio rosso di Treviso IGP, tardivo",16.0,1.5,1.4,0.1],["Radicchio variegato di Castelfranco IGP",16.0,1.3,1.4,0.1],["Radicchio, rosso, fresco",19.0,1.4,1.6,0.1],["Radicchio, verde, fresco",14.0,1.9,0.5,0.5],["Ragù alla bolognese",196.0,12.0,1.9,15.4],["Rana, crudo",64.0,15.5,0.0,0.2],["Rape, cotte, bollite",26.0,1.1,4.3,0.0],["Rape, crude",24.0,1.0,4.0,0.0],["Ravanelli, freschi",13.0,0.8,1.8,0.1],["Ravioli al burro e salvia",238.0,6.5,24.7,12.9],["Ravioli al sugo di pomodoro",135.0,4.8,17.6,5.1],["Ravioli al vapore",270.0,7.2,21.4,17.5],["Ravioli, cotti",177.0,7.2,27.5,4.6],["Ravioli, crudi, freschi",265.0,10.6,40.7,7.3],["Razza",68.0,14.2,0.7,0.9],["Rene di bovini",118.0,18.4,0.8,4.6],["Ribes, freschi",52.0,0.9,9.7,0.0],["Ricotta di bufala",212.0,10.5,3.7,17.3],["Ricotta di pecora",157.0,9.5,4.2,11.5],["Ricotta di vacca",146.0,8.8,3.5,10.9],["Riso Basmati, cotto, bollito",113.0,3.0,25.2,0.6],["Riso Basmati, crudo",367.0,9.0,82.9,1.9],["Riso Cantonese",207.0,5.5,29.8,7.8],["Riso Venere, cotto, bollito",160.0,3.5,36.9,0.3],["Riso Venere, crudo",355.0,7.8,80.4,1.3],["Riso al ragù alla bolognese",145.0,6.7,13.6,7.4],["Riso al sugo di pomodoro",90.0,1.7,16.5,2.2],["Riso burro e Parmigiano reggiano",144.0,3.4,22.1,5.2],["Riso, brillato",334.0,6.7,80.4,0.4],["Riso, brillato, cotto, bollito",100.0,2.0,24.2,0.1],["Riso, integrale",341.0,7.5,77.4,1.9],["Riso, integrale, cotto, bollito",113.0,2.5,25.5,0.6],["Riso, parboiled",338.0,7.4,81.3,0.3],["Riso, parboiled, cotto, bollito",97.0,2.1,23.3,0.1],["Riso, soffiato, da prima colazione",354.0,6.0,85.1,1.0],["Risotto alla parmigiana",181.0,4.1,25.4,7.5],["Robiola",338.0,20.0,2.3,27.7],["Rombo",81.0,16.3,1.2,1.3],["Rosmarino, fresco",110.0,1.4,13.5,4.4],["Rucola o Ruchetta, fresca",30.0,2.6,3.9,0.3],["Salame Brianza",384.0,26.5,1.0,30.5],["Salame Fabriano",420.0,26.5,1.5,34.3],["Salame Felino",375.0,30.5,0.5,27.9],["Salame Milano",385.0,25.4,1.1,31.0],["Salame Napoli",378.0,27.4,0.2,29.7],["Salame nostrano",370.0,27.3,1.1,28.5],["Salame ungherese",420.0,23.6,1.1,35.7],["Salami italiani alla cacciatora DOP",411.0,28.4,0.7,32.7],["Salmone",185.0,18.4,1.0,12.0],["Salmone, affumicato",147.0,25.4,1.2,4.5],["Salmone, in salamoia",192.0,21.1,1.0,11.5],["Salpa",104.0,18.0,2.0,2.7],["Salsiccia di Calabria",366.0,33.6,1.3,25.2],["Salsiccia di fegato",424.0,12.4,0.9,41.2],["Salsiccia di suino, fresca",304.0,15.4,0.6,26.7],["Salsiccia di suino, fresca, cotta, in padella",324.0,22.2,0.0,26.1],["Salsiccia di suino, secca",514.0,22.0,0.0,47.3],["Salvia, fresco",132.0,3.9,15.6,4.6],["Sarago",97.0,20.7,1.0,1.2],["Sarda",129.0,20.8,1.5,4.5],["Sardine",225.0,20.3,1.5,15.4],["Sardine, fritte",324.0,32.3,1.0,21.2],["Sarmale",103.0,5.7,7.9,5.2],["Savoiardi, industriali",395.0,11.9,69.6,9.2],["Scaloppina di tacchino al limone",170.0,20.5,11.5,4.9],["Scamorza",334.0,25.0,1.0,25.6],["Scarola",19.0,1.1,2.3,0.3],["Scarola IV gamma, fresca",17.0,0.9,2.2,0.2],["Scorfano",82.0,19.0,0.6,0.4],["Sedano rapa, crudo",29.0,1.9,3.8,0.1],["Sedano, cotto, al microonde",24.0,2.4,2.4,0.2],["Sedano, crudo",23.0,2.3,2.4,0.2],["Sego di bue",872.0,0.8,0.0,96.5],["Semola",346.0,11.5,76.9,0.5],["Seppia",72.0,14.0,0.7,1.5],["Sgombro o maccarello",170.0,17.0,0.5,11.1],["Sgombro o maccarello, in salamoia",177.0,19.3,0.0,11.1],["Sogliola",83.0,16.9,0.8,1.4],["Sogliola al vino bianco",188.0,19.0,5.6,10.1],["Sogliola, surgelata",81.0,17.3,0.1,1.3],["Soia, bevanda",32.0,2.9,0.8,1.9],["Soia, isolato proteico",369.0,86.5,4.5,0.7],["Soia, salsa",66.0,8.7,8.3,0.0],["Soia, secca",430.0,36.9,23.2,19.1],["Soia, yogurt",72.0,5.0,3.9,4.2],["Soppressata di Calabria",377.0,34.2,0.9,26.3],["Spaghetti fritti",165.0,4.6,13.6,10.4],["Speck dell'Alto Adige IGP",299.0,30.7,1.2,19.1],["Spezzatino di vitellone al vino rosso",161.0,18.1,3.0,8.6],["Spigola",82.0,16.5,0.6,1.5],["Spigola al cartoccio",126.0,16.2,0.9,6.4],["Spigola d'allevamento, filetti",149.0,21.3,0.8,6.8],["Spinaci, cotti, al microonde",35.0,3.4,3.0,0.7],["Spinaci, cotti, bolliti",41.0,4.0,3.5,0.8],["Spinaci, crudi",35.0,3.4,2.9,0.7],["Spinaci, surgelati",15.0,2.8,0.0,0.0],["Storione",145.0,19.2,0.0,7.6],["Stracchino",300.0,18.5,0.0,25.1],["Strutto o sugna",892.0,0.3,0.0,99.0],["Struzzo, solo tessuto muscolare, cotto, al forno",101.0,22.2,0.0,1.4],["Struzzo, solo tessuto muscolare, crudo",92.0,20.9,0.0,0.9],["Succo di frutta",56.0,0.3,14.5,0.1],["Sugo di pomodoro",74.0,1.3,3.6,5.7],["Suro o sugarello",104.0,18.3,1.0,3.0],["Tabulè",95.0,3.0,14.0,2.4],["Tacchino intero, con pelle, crudo",135.0,18.2,0.0,6.9],["Tacchino intero, senza pelle, cotto, al forno",117.0,23.3,0.0,2.6],["Tacchino intero, senza pelle, crudo",109.0,21.9,0.0,2.4],["Tacchino, coscio, con pelle, crudo",131.0,18.1,0.0,6.5],["Tacchino, fesa, cotta, al forno",131.0,29.6,0.0,1.4],["Tacchino, fesa, crudo",107.0,24.0,0.0,1.2],["Tacchino, fuso, con pelle, cotto, al forno",191.0,26.7,0.0,9.3],["Tacchino, fuso, con pelle, crudo",126.0,17.9,0.0,6.0],["Tacchino, fuso, senza pelle, cotto, al forno",190.0,28.0,0.0,8.7],["Tacchino, fuso, senza pelle, crudo",113.0,18.0,0.0,4.6],["Tacchino, sovracoscia, senza pelle, cotto, al forno",182.0,30.2,0.0,6.8],["Tacchino, sovracoscia, senza pelle, crudo",120.0,18.5,0.0,5.1],["Taleggio",315.0,19.0,0.9,26.2],["Tarassaco o dente di leone, fresco",37.0,3.1,3.7,1.1],["Tartufo, nero",48.0,6.0,0.7,0.5],["Tinca",79.0,17.9,0.9,0.5],["Tonno",159.0,21.5,0.1,8.1],["Tonno in salamoia, sgocciolato",103.0,25.1,0.0,0.3],["Tonno sott'olio, sgocciolato",192.0,25.2,0.0,10.1],["Topinambur, cotto, bollito",52.0,1.6,10.6,0.1],["Torrone alla mandorla",483.0,10.8,52.0,26.8],["Torta di mele",300.0,5.0,46.3,11.5],["Torta margherita",370.0,8.9,63.4,10.4],["Tortellini, freschi",302.0,12.2,49.9,7.1],["Tortellini, freschi, cotti",158.0,6.4,26.0,3.7],["Tortellini, secchi",379.0,15.7,57.6,10.8],["Triglia",123.0,15.8,1.1,6.2],["Trippa di bovini",108.0,15.8,0.0,5.0],["Trota",86.0,14.7,0.0,3.0],["Trota al forno",186.0,20.8,5.8,8.9],["Trota iridea d'allevamento, filetti",118.0,20.3,0.0,4.1],["Trota surgelata",92.0,17.8,0.0,2.3],["Trota surgelata, cotta, al microonde",105.0,20.4,0.0,2.6],["Trota surgelata, cotta, in forno",136.0,26.7,0.0,3.2],["Tè, foglie",108.0,19.6,3.0,2.0],["Uova di anatra, intero",190.0,12.2,0.7,15.4],["Uova di gallina, albume",43.0,10.7,0.0,0.0],["Uova di gallina, intero",128.0,12.4,0.0,8.7],["Uova di gallina, intero, congelato",128.0,12.4,0.0,8.7],["Uova di gallina, intero, cotto, a frittata o strapazzato",150.0,14.6,0.0,10.2],["Uova di gallina, intero, cotto, alla coque o sodo",128.0,12.4,0.0,8.7],["Uova di gallina, intero, in polvere",537.0,51.9,0.4,36.4],["Uova di gallina, tuorlo",325.0,15.8,0.0,29.1],["Uova di gallina, tuorlo, congelato",325.0,15.8,0.0,29.1],["Uova di gallina, tuorlo, cotto, in camicia",325.0,15.8,0.0,29.1],["Uova di gallina, tuorlo, in polvere",642.0,31.2,0.02,57.5],["Uova di oca, intero",189.0,13.8,1.0,14.4],["Uova di tacchina, intero",147.0,12.8,1.0,10.2],["Uva, bianca, fresca",86.0,0.4,21.5,0.1],["Uva, fresca",64.0,0.5,15.6,0.1],["Uva, nera, fresca",53.0,0.5,12.6,0.1],["Uva, secca",293.0,1.9,72.0,0.6],["Uva, succo, in cartone",66.0,0.3,17.3,0.0],["Vegetali misti, surgelati",67.0,3.3,13.7,0.3],["Vitello, filetto, cotto in padella",126.0,24.4,0.0,3.2],["Vitello, filetto, crudo",107.0,20.7,0.0,2.7],["Vongola",65.0,9.8,3.9,1.2],["Wafer ricoperto di cioccolato",498.0,8.2,60.3,26.6],["Wurstel di puro suino, cotto",259.0,14.6,0.3,22.2],["Wurstel di puro suino, crudo",250.0,13.2,1.9,21.1],["Yogurt caprino",60.0,3.6,5.1,2.9],["Yogurt da latte intero, alla frutta",80.0,3.4,10.5,2.8],["Yogurt da latte, parzialmente scremato",43.0,3.4,3.8,1.7],["Yogurt da latte, scremato",36.0,3.3,4.0,0.9],["Yogurt greco, 0% lipidi",51.0,9.0,4.0,0.0],["Yogurt greco, 0% lipidi, aromatizzato",86.0,7.5,15.0,0.0],["Yogurt greco, da latte intero",115.0,6.4,2.0,9.1],["Yogurt greco, da latte magro, alla frutta",74.0,6.0,11.0,0.9],["Yogurt, 0% lipidi",42.0,4.7,6.0,0.1],["Yogurt, da latte intero",66.0,3.8,4.3,3.9],["Zampone Modena IGP, cotto",262.0,23.7,2.6,17.5],["Zampone confezionato, precotto",361.0,19.1,0.0,31.6],["Zucca gialla, fresca",29.0,1.1,3.5,0.1],["Zucchero, saccarosio",392.0,0.0,104.5,0.0],["Zucchine chiare, cotte, al vapore",20.0,2.0,2.5,0.0],["Zucchine chiare, cotte, in padella grigliate",29.0,0.0,5.7,0.2],["Zucchine grigliate",75.0,4.3,5.5,3.8],["Zucchine, chiare",17.0,1.9,1.7,0.1],["Zucchine, chiare, cotte, al microonde",23.0,2.0,3.0,0.1],["Zucchine, cotte, bollite",30.0,3.2,3.4,0.2],["Zucchine, crude",16.0,1.5,1.7,0.1],["Zucchine, scure, cotte, al microonde",23.0,1.8,3.5,0.0],["Zucchine, scure, cotte, al vapore",20.0,1.6,2.7,0.1],["Zucchine, scure, cotte, in padella grigliate",37.0,2.7,5.6,0.1],["Zucchine, scure, crude",17.0,1.4,2.1,0.1]];                 // [nome, kcal, P, C, G, verifica?]
+const PIANO0 = null;          // piano settimana 4 letto dal PDF
+const F = DB.map(r => ({ nome: r[0], k: r[1], p: r[2], c: r[3], g: r[4], warn: !!r[5] }));
+const BYNAME = new Map(F.map(f => [f.nome.toLowerCase(), f]));
+const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+const NORMIDX = F.map(f => ({ f, n: norm(f.nome) }));
+
+const RX = [
+ ["piatto", /pasta al|pasta all|pasta alle|risotto|lasagna|parmigiana|frittata|minestron|minestre|rag(u|ù)|sugo di|pesto|besciamella|falafel|hummus|tabul|involtini|nachos|sarmale|baccal|brasato|spezzatino|scaloppina|gateau|pomodori al riso|riso al|riso burro|riso cantonese|polenta al|gnocchi al|ravioli al|trota al|sogliola al|spigola al|merluzzo in|alici al|alici marinate|pollo all|pollo alle|maiale in|gamberetti con|carciofi alla|pizza|panino|cheese burger|hamburger|kebab|chicken nuggets|pasta e fagioli|pastiera|castagnaccio|nuvole di gamberi|ravioli, |tortellini|torta |cannoli|pan di spagna|crostata|savoiardi|merendine|gelato|sorbetto|ghiacciolo/],
+ ["affettati", /prosciutto|salame|salami|bresaola|mortadella|speck|coppa$|coppa |capocollo|pancetta|salsiccia|wurstel|soppressata|cotechino|zampone|ciccioli|pat(e|è) di|lardo|strutto|sego|salsiccia/],
+ ["formaggi", /grana|parmigiano|pecorino|provolone|emmenthal|groviera|cheddar|edam|caciocavallo|fontina|taleggio|gorgonzola|scamorza|caciotta|italico|brie|camembert|asiago|dolce verde|butirro|latteria|cacioricotta/],
+ ["latticini", /latte|yogurt|ricotta|mozzarella|fior di latte|stracchino|crescenza|fiocchi di formaggio|robiola|mascarpone|panna|caciottina|burrini|formaggino|formaggio cremoso|formaggio molle|skyr|crema di latte/],
+ ["uova", /uova|albume|tuorlo/],
+ ["pesce", /salmone|sgombro|tonno|sardin|sarda|alici|acciug|merluzz|nasell|orata|spigola|trota|sogliol|dentice|cernia|polpo|seppia|calamar|gamber|cozza|vongol|ostrica|aragosta|granchio|storione|anguilla|aringa|cefalo|halibut|palombo|rombo|scorfano|sarago|pagello|triglia|luccio|tinca|carpa|razza|boga|suro|mormora|occhiata|salpa|lattarini|coregone|capitone|caviale|bottarga|mel(u|ù) o pesce|pesce gatto|stoccafisso|bastoncini di pesce|lumaca|rana/],
+ ["carne", /pollo|tacchino|bovino|vitell|maiale|agnell|coniglio|cavallo|struzzo|faraona|quaglia|anatra|oca,|gallina|piccione|fagiano|capra|capretto|pecora,|bufalo|cervo|daino|trippa|fegato|cuore|lingua|milza|rene|animelle|cervello|polmone|coratella|carne bovina/],
+ ["legumi", /ceci|fagiol|lenticchi|piselli|fave|lupini|soia|cicerchi/],
+ ["fruttasecca", /mandorle|noci|nocciole|pistacchi|anacardi|pinoli|macadamia|arachidi|castagne|cocco|pecan|semi |sesamo|girasole/],
+ ["frutta", /mele|mela|pere|banane|arance|uva|pesche|peschenoci|albicocche|fichi|kiwi|fragole|ciliege|prugne|melone|cocomero|ananas|mango|papaia|loti|kaki|mandarini|mandaranci|clementine|pompelmo|limoni|lamponi|mirtilli|mora |ribes|nespole|melagrane|litchi|datteri|amarene|feijoa|guava|anona|babaco|passiflora|avocado|succo di frutta|canditi|carrube/],
+ ["grassi", /olio|olive|oliva|burro|margarina|maionese|tartufo/],
+ ["pane", /pane|rosetta|azzimo|panini|pangrattato|grissini|cracker|fette biscottate|piadina/],
+ ["cereali", /pasta|riso|farro|orzo|quinoa|miglio|mais|couscous|semola|farina|avena|frumento|grano|polenta|corn flakes|muesli|crusca|germe|gnocchi|biscotti|amido|fecola|pop corn|patatine/],
+ ["vegetali", /verdur|insalata|lattuga|lattughino|spinaci|bieta|carciof|zucchin|zucca|melanzan|peperon|pomodor|carote|cipoll|cavol|broccol|finocchi|fagiolini|funghi|asparag|cicoria|radicchio|rucola|sedano|porri|patate|rape|ravanelli|indivia|scarola|agretti|cardi|topinambur|germogli|prezzemolo|basilico|salvia|rosmarino|menta|aglio|barbabietole|cetrioli|tarassaco|vegetali misti|fiori di zucca|peperoncini/]
+];
+function gruppo(nome){
+  const n = norm(nome);
+  for (const [g, rx] of RX) if (rx.test(n)) return g;
+  return "altro";
+}
+const LIM = {
+  pesce:[50,250,5], carne:[50,250,5], affettati:[20,120,5], latticini:[50,300,5], formaggi:[10,50,1],
+  uova:[53,212,53], legumi:[50,300,5], legumisecchi:[20,100,5], cereali:[30,120,5], pane:[20,150,5],
+  vegetali:[50,400,5], frutta:[50,400,5], fruttasecca:[5,40,1], grassi:[0,20,1], piatto:[100,450,5], altro:[20,300,5]
+};
+function limiti(f){
+  const n = norm(f.nome);
+  let g = gruppo(f.nome);
+  if (g === "uova" && /albume|tuorlo/.test(n)) return [20, 200, 5];
+  if (g === "grassi") return /^oliv/.test(n) ? [10, 80, 5] : [0, 20, 1];
+  if (g === "legumi" && /secch/.test(n) && !/cott|bollit|scatola/.test(n)) g = "legumisecchi";
+  return LIM[g] || LIM.altro;
+}
+let PREFERITI = new Set();
+const preferito = f => PREFERITI.has(f.nome);
+const ESCLUDI_SOST = /in polvere|congelat|liofilizzat|disidratat|essiccat|, secco$|fritt/;
+const ETICHETTA = ["pesce","carne","affettati","latticini","formaggi","uova","legumi","legumisecchi","cereali","pane","vegetali","frutta","fruttasecca","grassi","piatto"];
+const NOMEGRUPPO = { pesce:"Pesce", carne:"Carne", affettati:"Affettati", latticini:"Latticini", formaggi:"Formaggi stagionati",
+  uova:"Uova", legumi:"Legumi", legumisecchi:"Legumi secchi", cereali:"Cereali", pane:"Pane", vegetali:"Vegetali",
+  frutta:"Frutta", fruttasecca:"Frutta secca", grassi:"Grassi", piatto:"Piatti pronti", altro:"Altro" };
+
+/* ---------- calcolo ---------- */
+const MTOL = 4;
+const tolK = k => Math.max(10, 0.05 * k);
+const zero = () => [0,0,0,0];
+function add(t, f, g){ return [t[0]+f.k*g/100, t[1]+f.p*g/100, t[2]+f.c*g/100, t[3]+f.g*g/100]; }
+function macro(voci){ let t = zero(); for (const v of voci) if (v.f && v.g) t = add(t, v.f, v.g); return t; }
+function delta(target, m){ return [m[0]-target[0], m[1]-target[1], m[2]-target[2], m[3]-target[3]]; }
+function pesi(target){ const tk = tolK(target[0]); return [1/tk, 1/MTOL, 1/MTOL, 1/MTOL]; }
+function entro(target, d){ const tk = tolK(target[0]); return Math.abs(d[0]) <= tk + 1e-9 && Math.abs(d[1]) <= MTOL + 1e-9 && Math.abs(d[2]) <= MTOL + 1e-9 && Math.abs(d[3]) <= MTOL + 1e-9; }
+function errore(target, d){ const w = pesi(target); let e = 0; for (let i=0;i<4;i++) e += (d[i]*w[i])**2; return e; }
+const vec = f => [f.k/100, f.p/100, f.c/100, f.g/100];
+function round(g, lim){ const [mn,mx,st] = lim; let r = Math.round(g/st)*st; return Math.min(mx, Math.max(mn, r)); }
+function uno(target, f, resto){
+  const v = vec(f), w = pesi(target), t = resto || target;
+  let num = 0, den = 0;
+  for (let i=0;i<4;i++){ num += v[i]*t[i]*w[i]*w[i]; den += v[i]*v[i]*w[i]*w[i]; }
+  return den > 0 ? num/den : 0;
+}
+function due(target, a, b){
+  const va = vec(a), vb = vec(b), w = pesi(target);
+  let aa=0, ab=0, bb=0, at=0, bt=0;
+  for (let i=0;i<4;i++){ const w2 = w[i]*w[i];
+    aa += va[i]*va[i]*w2; ab += va[i]*vb[i]*w2; bb += vb[i]*vb[i]*w2;
+    at += va[i]*target[i]*w2; bt += vb[i]*target[i]*w2; }
+  const det = aa*bb - ab*ab;
+  if (Math.abs(det) < 1e-12) return null;
+  return [(at*bb - bt*ab)/det, (aa*bt - ab*at)/det];
+}
+function valuta(target, voci){
+  const m = macro(voci), d = delta(target, m);
+  return { voci, m, d, ok: entro(target, d), err: errore(target, d), grammi: voci.reduce((s,v)=>s+v.g,0) };
+}
+const ADJ = ["Olio di oliva extra vergine", "Uova di gallina, albume", "Pane bianco"];
+function correttori(){ return ADJ.map(n => BYNAME.get(n.toLowerCase())).filter(Boolean); }
+function proposte(target, f){
+  const out = [];
+  const lim = limiti(f);
+  const g1 = round(uno(target, f), lim);
+  if (g1 > 0) out.push(valuta(target, [{ f, g: g1 }]));
+  for (const c of correttori()){
+    if (c.nome === f.nome) continue;
+    const lc = limiti(c);
+    const s = due(target, f, c);
+    if (!s) continue;
+    let ga = round(s[0], lim);
+    let resto = delta(zero(), target).map((t,i) => target[i] - vec(f)[i]*ga);
+    let gb = round(uno(target, c, resto), lc);
+    if (gb <= 0) continue;
+    out.push(valuta(target, [{ f, g: ga }, { f: c, g: gb }]));
+  }
+  out.sort((x,y) => (x.voci.length - y.voci.length) || (x.err - y.err) || (x.grammi - y.grammi));
+  return out;
+}
+function sostituti(target, escludi){
+  const perGruppo = new Map();
+  const esc = new Set((escludi||[]).map(n => n.toLowerCase()));
+  for (const f of F){
+    if (f.warn || esc.has(f.nome.toLowerCase()) || ESCLUDI_SOST.test(norm(f.nome))) continue;
+    const g = gruppo(f.nome);
+    if (!ETICHETTA.includes(g) || g === "grassi") continue;
+    const p = proposte(target, f);
+    if (!p.length) continue;
+    const best = p.find(x => x.ok) || p[0];
+    const key = g === "legumisecchi" ? "legumi" : g;
+    if (!perGruppo.has(key)) perGruppo.set(key, { ok: [], quasi: [] });
+    const slot = perGruppo.get(key);
+    if (best.ok) slot.ok.push({ f, r: best }); else slot.quasi.push({ f, r: best });
+  }
+  const ordine = ["pesce","carne","affettati","latticini","formaggi","uova","legumi","cereali","pane","vegetali","frutta","fruttasecca","piatto"];
+  const res = [];
+  for (const g of ordine){
+    const s = perGruppo.get(g);
+    if (!s) continue;
+    s.ok.sort((a,b) => (preferito(b.f) - preferito(a.f)) || (a.r.voci.length - b.r.voci.length) || (a.r.err - b.r.err) || (a.r.grammi - b.r.grammi));
+    s.quasi.sort((a,b) => a.r.err - b.r.err);
+    res.push({ gruppo: g, titolo: NOMEGRUPPO[g], ok: s.ok.slice(0,3), quasi: s.quasi.slice(0,1) });
+  }
+  return res;
+}
+function integra(target, disponibili){
+  const fissi = disponibili.filter(v => v.g > 0);
+  const liberi = disponibili.filter(v => !v.g);
+  let resto = target.slice();
+  for (const v of fissi) for (let i=0;i<4;i++) resto[i] -= vec(v.f)[i]*v.g;
+  const baseVoci = fissi.map(v => ({ f: v.f, g: v.g, fisso: true }));
+  let voci = baseVoci.slice();
+  if (liberi.length === 1){
+    voci.push({ f: liberi[0].f, g: round(uno(target, liberi[0].f, resto), limiti(liberi[0].f)) });
+  } else if (liberi.length === 2){
+    const s = due(resto, liberi[0].f, liberi[1].f);
+    if (s){ voci.push({ f: liberi[0].f, g: round(s[0], limiti(liberi[0].f)) });
+            voci.push({ f: liberi[1].f, g: round(s[1], limiti(liberi[1].f)) }); }
+  } else if (liberi.length > 2){
+    for (const l of liberi) voci.push({ f: l.f, g: round(uno(target, l.f, resto.map(x => x/liberi.length)), limiti(l.f)) });
+  }
+  const base = valuta(target, voci);
+  if (base.ok) return { base, finale: base, aggiunte: [] };
+  const libero = liberi.length === 1 ? liberi[0].f : null;
+  let migliore = null;
+  for (const f of F){
+    if (f.warn || !ETICHETTA.includes(gruppo(f.nome)) || ESCLUDI_SOST.test(norm(f.nome))) continue;
+    if (disponibili.some(v => v.f.nome === f.nome)) continue;
+    let prova = null;
+    if (libero){
+      const s = due(resto, libero, f);
+      if (!s) continue;
+      const ga = round(s[0], limiti(libero)), gb = round(s[1], limiti(f));
+      if (gb <= 0 || ga <= 0) continue;
+      prova = valuta(target, baseVoci.concat([{ f: libero, g: ga }, { f, g: gb, aggiunta: true }]));
+    } else {
+      const g = round(uno(target, f, delta(base.m, target)), limiti(f));
+      if (g <= 0) continue;
+      prova = valuta(target, voci.concat([{ f, g, aggiunta: true }]));
+    }
+    if (!migliore) migliore = prova;
+    else {
+      const meglio = (prova.ok && !migliore.ok) ||
+        (prova.ok === migliore.ok && (preferito(f) && !preferito(migliore.voci[migliore.voci.length-1].f) ? true :
+          (preferito(f) === preferito(migliore.voci[migliore.voci.length-1].f) && prova.err < migliore.err)));
+      if (meglio) migliore = prova;
+    }
+  }
+  const finale = migliore && (migliore.ok || migliore.err < base.err) ? migliore : base;
+  return { base, finale, aggiunte: finale.voci.filter(v => v.aggiunta) };
+}
+/* ---------- utilità ---------- */
+const fmt1 = x => (Math.round(x*10)/10).toFixed(1).replace(".", ",");
+const fmtk = x => Math.round(x).toLocaleString("it-IT");
+const seg = x => (Math.round(x*10)/10) > 0 ? "+" : ((Math.round(x*10)/10) < 0 ? "\u2212" : "");
+const dG = x => seg(x) + fmt1(Math.abs(x)) + " g";
+const dK = x => (Math.round(x) > 0 ? "+" : (Math.round(x) < 0 ? "\u2212" : "")) + Math.abs(Math.round(x)) + " kcal";
+function cerca(q, n){
+  const s = norm(q); if (s.length < 2) return [];
+  const out = [];
+  for (const it of NORMIDX){ const i = it.n.indexOf(s); if (i >= 0) out.push([i, it.f]); }
+  out.sort((a,b) => a[0]-b[0] || a[1].nome.length - b[1].nome.length);
+  return out.slice(0, n || 8).map(x => x[1]);
+}
+function atwaterOk(k, p, c, g){ const a = 4*p + 4*c + 9*g; return k > 0 && Math.abs(a - k) <= Math.max(25, 0.25*k) && (p + c + g) <= 100; }
+</script>
+
+<script>
+"use strict";
+/* ---------- stato e memoria ---------- */
+let DBC = null, SAMPLE = null, LIMITS = null;
+const S = { tab: "sost", attivo: 0, modale: null, piano: null, prodotti: [], sel: [], giorno: 0, pasto: 0, disp: [], risultati: null, risPasto: null, busy: "" };
+const local = {
+  get(k, d){ try { const v = localStorage.getItem("sa_" + k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("sa_" + k, JSON.stringify(v)); } catch(e){} }
+};
+async function carica(){
+  try { DBC = await claude.use("db"); } catch(e){ DBC = null; }
+  try { SAMPLE = await claude.use("sample"); } catch(e){ SAMPLE = null; }
+  if (SAMPLE) { try { LIMITS = await SAMPLE.limits(); } catch(e){ LIMITS = null; } }
+  let piano = null, prodotti = null;
+  if (DBC){
+    try { const d = await DBC.doc("data/piano/corrente").get(); piano = d.data() || null; } catch(e){}
+    try { const q = await DBC.collection("data/prodotti").get(); prodotti = q.docs.map(x => x.data()); } catch(e){}
+  }
+  S.piano = piano || local.get("piano", null) || PIANO0;
+  S.prodotti = prodotti && prodotti.length ? prodotti : local.get("prodotti", []);
+  aggiornaPreferiti();
+  render();
+}
+async function salvaPiano(p){
+  S.piano = p; local.set("piano", p); aggiornaPreferiti();
+  if (DBC){ try {
+    const vecchio = await DBC.doc("data/piano/corrente").get();
+    if (vecchio.data()) await DBC.doc("data/piano/archivio/" + Date.now()).set(vecchio.data());
+    await DBC.doc("data/piano/corrente").set(p);
+  } catch(e){} }
+}
+async function salvaProdotto(pr){
+  S.prodotti = S.prodotti.filter(x => x.nome !== pr.nome && (!pr.ean || x.ean !== pr.ean)).concat([pr]);
+  local.set("prodotti", S.prodotti);
+  if (DBC){ try { await DBC.collection("data/prodotti").doc(pr.ean || pr.nome.replace(/[^a-z0-9]+/gi,"_").slice(0,80)).set(pr); } catch(e){} }
+}
+function aggiornaPreferiti(){
+  const s = new Set();
+  if (S.piano) for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci) if (v.crea) s.add(v.crea);
+  for (const p of S.prodotti) s.add(p.nome);
+  PREFERITI = s;
+}
+function trovaAlimento(nome){
+  const p = S.prodotti.find(x => norm(x.nome) === norm(nome));
+  if (p) return { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g, etichetta: true };
+  const f = BYNAME.get((nome||"").toLowerCase()); if (f) return f;
+  const c = cerca(nome, 1); return c[0] || null;
+}
+/* ---------- helper DOM ---------- */
+function el(tag, attrs, kids){
+  const n = document.createElement(tag);
+  for (const k in (attrs||{})){
+    if (k === "class") n.className = attrs[k];
+    else if (k === "text") n.textContent = attrs[k];
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  }
+  for (const c of [].concat(kids||[])) if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  return n;
+}
+const ICON = {
+  sost: "M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4",
+  pasto: "M6 3v5a2.5 2.5 0 0 0 5 0V3M8.5 10.5V21M17.5 21V3c-2 1.5-3.5 4.5-3.5 8h3.5",
+  eti: "M5 3h14v18H5zM8.5 8h7M8.5 12h7M8.5 16h4",
+  piano: "M3.5 5h17v15.5h-17zM3.5 10h17M8 3v4M16 3v4",
+  scan: "M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M8 9v6M11 9v6M14 9v6M16.5 9v6",
+  cam: "M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4zM12 13.5m-3.5 0a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0",
+  ok: "M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12.5l2.7 2.7L16 9.8",
+  no: "M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M5.8 18.2L18.2 5.8",
+  up: "M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14",
+  x: "M7 7l10 10M17 7L7 17", plus: "M12 6v12M6 12h12"
+};
+function svg(name, size){
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", size||24); s.setAttribute("height", size||24); s.setAttribute("aria-hidden","true");
+  for (const d of ICON[name].split("M").filter(Boolean)){
+    const p = document.createElementNS("http://www.w3.org/2000/svg","path"); p.setAttribute("d","M"+d); s.appendChild(p);
+  }
+  return s;
+}
+function gauge(target, d, i){
+  const tk = tolK(target[0]);
+  const tol = i === 0 ? tk : MTOL;
+  const ok = Math.abs(d[i]) <= tol + 1e-9;
+  const pos = Math.max(4, Math.min(96, 50 + d[i]/tol*25));
+  const col = ok ? "var(--ok)" : "var(--no)";
+  const lab = ["kcal","Proteine","Carboidrati","Grassi"][i];
+  const tr = el("div", { class:"track" }, [el("i"), el("u"), el("s", { style:"left:" + pos.toFixed(1) + "%;background:" + col })]);
+  return el("div", { class:"gauge" }, [
+    el("div", { class:"lab" }, [el("span", { text: lab }), el("b", { style:"color:"+col, text: i===0 ? dK(d[0]) : dG(d[i]) })]),
+    tr
+  ]);
+}
+function gauges(target, d){ return el("div", { class:"gauges" }, [0,1,2,3].map(i => gauge(target, d, i))); }
+function valori(m){
+  return el("div", { class:"grid4" }, [
+    el("div", { class:"val" }, [el("b", { text: fmtk(m[0]) }), el("span", { text:"kcal" })]),
+    el("div", { class:"val" }, [el("b", { text: fmt1(m[1]) }), el("span", { text:"g proteine" })]),
+    el("div", { class:"val" }, [el("b", { text: fmt1(m[2]) }), el("span", { text:"g carboidrati" })]),
+    el("div", { class:"val" }, [el("b", { text: fmt1(m[3]) }), el("span", { text:"g grassi" })])
+  ]);
+}
+function grammi(g, cls){ return el("span", { class: cls || "big" }, [document.createTextNode(String(g)), el("i", { text:"g" })]); }
+function rigaVoce(nome, g, tipo){
+  const cls = "plus" + (tipo === "fisso" ? " fisso" : "");
+  return el("div", { class: cls }, [
+    el("span", { class:"row", style:"font-size:15px;min-width:0" }, [
+      tipo === "agg" ? el("span", { class:"row", style:"color:var(--ok)" }, [svg("plus",16)]) : null,
+      el("span", { text: nome, style:"overflow:hidden;text-overflow:ellipsis" }),
+      tipo === "fisso" ? el("span", { class:"tag w", text:"fisso" }) : null
+    ]),
+    el("span", { class:"num", style:"font-size:20px;font-weight:600;white-space:nowrap", text: g + " g" })
+  ]);
+}
+function parseVoce(txt){
+  const m = String(txt).match(/^(.*?)[\s,]*(\d+(?:[.,]\d+)?)\s*(g|gr|ml)?$/i);
+  const nome = (m ? m[1] : txt).trim();
+  const g = m && m[2] ? Math.round(parseFloat(m[2].replace(",", "."))) : 0;
+  return { nome, g };
+}
+function chipsInput(lista, onChange, placeholder){
+  const wrap = el("div", { style:"display:flex;flex-direction:column;gap:6px" });
+  const box = el("div", { class:"chips" });
+  const sug = el("div", { style:"display:flex;flex-direction:column;gap:4px" });
+  const inp = el("input", { type:"text", placeholder: placeholder || "Aggiungi alimento", autocomplete:"off", enterkeyhint:"done" });
+  function disegna(){
+    box.innerHTML = "";
+    lista.forEach((v, i) => {
+      box.appendChild(el("span", { class:"chip" }, [
+        el("span", { text: v.f.nome, style:"overflow:hidden;text-overflow:ellipsis" }),
+        el("span", { class:"g num", text: v.g ? v.g + " g" : "da calcolare" }),
+        el("button", { type:"button", "aria-label":"Rimuovi " + v.f.nome, onclick(){ lista.splice(i,1); disegna(); onChange(); } }, [svg("x",14)])
+      ]));
+    });
+    box.appendChild(inp);
+  }
+  function metti(nome, g){
+    const f = trovaAlimento(nome);
+    if (!f){
+      sug.innerHTML = "";
+      sug.appendChild(el("p", { class:"small", text: "\u201C" + nome + "\u201D non \u00e8 nelle tabelle CREA n\u00e9 tra i prodotti salvati. Aggiungilo dalla scheda Etichetta." }));
+      return;
+    }
+    lista.push({ f, g: g || 0 }); disegna(); onChange();
+  }
+  inp.addEventListener("input", () => {
+    sug.innerHTML = "";
+    const q = parseVoce(inp.value).nome;
+    for (const f of cerca(q, 6))
+      sug.appendChild(el("button", { type:"button", class:"mini", style:"height:auto;padding:8px 12px;font-weight:500;text-align:left", text: f.nome,
+        onclick(){ const g = parseVoce(inp.value).g; inp.value = ""; sug.innerHTML = ""; metti(f.nome, g); } }));
+  });
+  inp.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const parti = inp.value.split(",").map(x => x.trim()).filter(Boolean);
+    inp.value = ""; sug.innerHTML = "";
+    for (const p of parti){ const v = parseVoce(p); metti(v.nome, v.g); }
+  });
+  disegna();
+  wrap.appendChild(box); wrap.appendChild(sug);
+  return wrap;
+}
+async function chiediClaude(prompt, opts){
+  if (!SAMPLE) throw { code: "not_granted" };
+  return await SAMPLE.json(prompt, opts || {});
+}
+function esportaBackup(){
+  const dati = { app:"sostituzioni-alimenti", versione:1, data:new Date().toISOString(), piano:S.piano, prodotti:S.prodotti };
+  const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(dati)], { type:"application/json" })),
+                      download: "sostituzioni-backup.json" });
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+function importaBackup(){
+  const i = el("input", { type:"file", accept:"application/json,.json", class:"hide" });
+  i.addEventListener("change", async () => {
+    const f = i.files && i.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      const piano = d.piano || (d.giorni ? d : null);
+      if (piano && Array.isArray(piano.giorni) && piano.giorni.length){
+        for (const g of piano.giorni){ if (!Array.isArray(g.pasti)) throw 0;
+          for (const p of g.pasti) for (const v of p.voci){ if (typeof v.nome !== "string" || !(+v.g > 0)) throw 0; v.g = Math.round(+v.g); } }
+        await salvaPiano(piano);
+      }
+      if (Array.isArray(d.prodotti)) for (const p of d.prodotti) if (p && p.nome && atwaterOk(+p.k, +p.p, +p.c, +p.g)) await salvaProdotto(p);
+      render();
+    } catch(e){ alert("File non valido: nessun dato importato."); }
+  });
+  document.body.appendChild(i); i.click(); setTimeout(() => i.remove(), 120000);
+}
+function avviso(testo, tipo){ return el("div", { class:"banner " + (tipo||"w") }, [el("span", { text: testo })]); }
+</script>
+
+<script>
+"use strict";
+function risolvi(voce){
+  if (voce.crea){ const f = BYNAME.get(voce.crea.toLowerCase()); if (f) return f; }
+  const p = S.prodotti.find(x => norm(x.nome) === norm(voce.nome));
+  if (p) return { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g, etichetta: true };
+  return null;
+}
+function macroPasto(pasto){
+  let t = zero(), mancanti = [];
+  for (const v of pasto.voci){
+    const f = risolvi(v);
+    if (!f){ mancanti.push(v.nome); continue; }
+    t = add(t, f, v.g);
+  }
+  return { t, mancanti };
+}
+function macroGiorno(g){
+  let t = zero(), mancanti = [];
+  for (const p of g.pasti){ const r = macroPasto(p); t = [t[0]+r.t[0], t[1]+r.t[1], t[2]+r.t[2], t[3]+r.t[3]]; mancanti = mancanti.concat(r.mancanti); }
+  return { t, mancanti: [...new Set(mancanti)] };
+}
+/* ================= SOSTITUISCI ================= */
+function vistaSost(){
+  const out = [];
+  out.push(el("header", {}, [el("h1", { text:"Sostituisci" }), el("p", { class:"sub", text:"Stesse calorie e stessi macro, entro la tolleranza." })]));
+  const card = el("form", { class:"card", onsubmit(e){ e.preventDefault(); } });
+  card.appendChild(el("label", { text:"Alimenti del piano" }));
+  card.appendChild(chipsInput(S.sel, () => { S.risultati = null; }, "Aggiungi, separa con una virgola"));
+  card.appendChild(el("p", { class:"small", text:"Scrivi alimento e grammi, es. salmone 180 g, patate 170 g." }));
+  const btn = el("button", { type:"button", class:"btn", text:"Trova sostituti", onclick(){
+    const voci = S.sel.filter(v => v.g > 0);
+    if (!voci.length) return;
+    S.risultati = voci.map(v => {
+      const target = macro([v]);
+      return { voce: v, target, gruppi: sostituti(target, [v.f.nome]) };
+    });
+    S.attivo = 0;
+    render();
+  } });
+  card.appendChild(btn);
+  out.push(card);
+  if (S.risultati && S.risultati.length){
+    if (S.risultati.length > 1){
+      const seg = el("div", { class:"seg", style:"grid-template-columns:repeat(" + Math.min(S.risultati.length,3) + ",minmax(0,1fr))" });
+      S.risultati.forEach((r, i) => seg.appendChild(el("button", { type:"button", "aria-pressed": String(i === S.attivo), text: r.voce.f.nome.split(",")[0] + " " + r.voce.g + " g", onclick(){ S.attivo = i; render(); } })));
+      out.push(seg);
+    }
+    const r = S.risultati[S.attivo] || S.risultati[0];
+    const ref = el("section", { class:"card" }, [
+      el("div", { class:"between" }, [el("h2", { text: r.voce.f.nome }), el("span", { class:"num", style:"font-weight:600", text: r.voce.g + " g" })]),
+      valori(r.target),
+      el("p", { class:"small", text: "Tolleranza \u00b1" + Math.round(tolK(r.target[0])) + " kcal e \u00b14 g per macro. Nei risultati la banda chiara \u00e8 la tolleranza, il punto \u00e8 lo scostamento." })
+    ]);
+    out.push(ref);
+    const trovati = r.gruppi.reduce((s,g) => s + g.ok.length, 0);
+    const senza = r.gruppi.filter(g => !g.ok.length).length;
+    out.push(el("div", {}, [el("h2", { style:"font-size:22px", text:"Sostituti" }),
+      el("p", { class:"sub", text: trovati + (trovati === 1 ? " trovato" : " trovati") + ", " + senza + " categorie senza alternative." })]));
+    for (const g of r.gruppi.filter(x => x.ok.length)){
+      const sec = el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [el("h3", { text: g.titolo })]);
+      for (const s of g.ok){
+        const art = el("article", { class:"card" }, [
+          el("div", { class:"between" }, [
+            el("div", { style:"display:flex;flex-direction:column;gap:4px;min-width:0" }, [
+              el("span", { style:"font-weight:600", text: s.f.nome }),
+              el("span", { class:"row", style:"color:var(--ok);font-size:13px;font-weight:600" }, [svg("ok",16), el("span", { text:"Entro tolleranza" })])
+            ]),
+            grammi(s.r.voci[0].g)
+          ])
+        ]);
+        for (let i = 1; i < s.r.voci.length; i++) art.appendChild(rigaVoce(s.r.voci[i].f.nome, s.r.voci[i].g, "agg"));
+        art.appendChild(gauges(r.target, s.r.d));
+        sec.appendChild(art);
+      }
+      out.push(sec);
+    }
+    const ko = r.gruppi.filter(x => !x.ok.length && x.quasi.length);
+    if (ko.length){
+      const card2 = el("article", { class:"card", style:"gap:0;padding:2px 16px" });
+      ko.forEach((g, i) => {
+        const q = g.quasi[0];
+        const fuori = [];
+        [0,1,2,3].forEach(j => { const tol = j === 0 ? tolK(r.target[0]) : MTOL;
+          if (Math.abs(q.r.d[j]) > tol + 1e-9) fuori.push(j === 0 ? "kcal " + dK(q.r.d[0]).replace(" kcal","") : ["","proteine","carboidrati","grassi"][j] + " " + dG(q.r.d[j])); });
+        const testo = fuori.join(", ");
+        card2.appendChild(el("div", { style:"display:flex;gap:12px;padding:12px 0;" + (i ? "border-top:1px solid var(--line)" : "") }, [
+          el("span", { style:"color:var(--no);display:flex" }, [svg("no",20)]),
+          el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
+            el("span", { style:"font-weight:600", text: g.titolo + ": non sostituibile" }),
+            el("span", { class:"small", text: "Pi\u00f9 vicino: " + q.f.nome + " " + q.r.voci.map(v => v.g + " g").join(" + ") }),
+            el("span", { class:"small num", style:"color:var(--no);font-weight:600", text: testo.charAt(0).toUpperCase() + testo.slice(1) })
+          ])
+        ]));
+      });
+      out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [el("h3", { text:"Senza alternative" }), card2]));
+    }
+  }
+  out.push(el("p", { class:"small", text:"Valori per 100 g: CREA, Tabelle di composizione degli alimenti, aggiornamento 2019." }));
+  return out;
+}
+/* ================= PASTO ================= */
+function vistaPasto(){
+  const out = [];
+  const piano = S.piano;
+  if (!piano || !piano.giorni || !piano.giorni.length)
+    return [el("header", {}, [el("h1", { text:"Pasto" }), el("p", { class:"sub", text:"Carica prima il piano dalla scheda Piano." })])];
+  out.push(el("header", {}, [el("h1", { text:"Pasto" }), el("p", { class:"sub", text: piano.titolo || "Piano settimanale" })]));
+  const g = piano.giorni[S.giorno] || piano.giorni[0];
+  const segG = el("div", { class:"seg", style:"grid-template-columns:repeat(" + piano.giorni.length + ",minmax(0,1fr))" });
+  piano.giorni.forEach((d, i) => segG.appendChild(el("button", { type:"button", "aria-pressed": String(i === S.giorno), text: d.giorno.slice(0,3), onclick(){ S.giorno = i; S.pasto = 0; S.risPasto = null; render(); } })));
+  out.push(segG);
+  const segP = el("div", { class:"seg", style:"grid-template-columns:repeat(3,minmax(0,1fr))" });
+  g.pasti.forEach((p, i) => segP.appendChild(el("button", { type:"button", class:"num", "aria-pressed": String(i === S.pasto), text: p.ora, onclick(){ S.pasto = i; S.risPasto = null; render(); } })));
+  out.push(segP);
+  const pasto = g.pasti[S.pasto] || g.pasti[0];
+  const mp = macroPasto(pasto);
+  const card = el("section", { class:"card" }, [el("h2", { text:"Previsto " + g.giorno.toLowerCase() + " alle " + pasto.ora })]);
+  const lista = el("div", { class:"list" });
+  for (const v of pasto.voci){
+    const f = risolvi(v);
+    lista.appendChild(el("div", { class:"item" }, [
+      el("span", { class:"row", style:"min-width:0" }, [el("span", { text: v.nome, style:"overflow:hidden;text-overflow:ellipsis" }),
+        !f ? el("span", { class:"tag w", text:"da etichetta" }) : (v.conf ? el("span", { class:"tag w", text:"da confermare" }) : null)]),
+      el("span", { class:"num", style:"font-weight:600", text: v.g + " g" })
+    ]));
+  }
+  card.appendChild(lista);
+  card.appendChild(valori(mp.t));
+  if (mp.mancanti.length) card.appendChild(avviso("Mancano i valori di: " + mp.mancanti.join(", ") + ". Aggiungili dalla scheda Etichetta, altrimenti il totale \u00e8 parziale.", "no"));
+  out.push(card);
+  const disp = el("section", { class:"card" }, [el("label", { text:"Cosa hai a disposizione?" })]);
+  disp.appendChild(chipsInput(S.disp, () => { S.risPasto = null; }, "Aggiungi, separa con una virgola"));
+  disp.appendChild(el("p", { class:"small", text:"I grammi che indichi restano fissi, gli altri li calcola l\u2019app." }));
+  disp.appendChild(el("button", { type:"button", class:"btn", text:"Calcola", onclick(){
+    if (!S.disp.length || mp.mancanti.length) return;
+    S.risPasto = integra(mp.t, S.disp.map(v => ({ f: v.f, g: v.g })));
+    render();
+  } }));
+  if (SAMPLE) disp.appendChild(el("button", { type:"button", class:"btn2", text:"Piatto non in tabella? Chiedi a Claude", onclick: chiediPiatto }));
+  out.push(disp);
+  if (S.risPasto){
+    const r = S.risPasto.finale;
+    const art = el("article", { class:"card" });
+    art.appendChild(el("span", { class:"row", style:"font-size:13px;font-weight:600;color:" + (r.ok ? "var(--ok)" : "var(--no)") }, [
+      svg(r.ok ? "ok" : "no", 16), el("span", { text: r.ok ? (S.risPasto.aggiunte.length ? "Equivalente con un\u2019aggiunta" : "Equivalente") : "Non sostituibile entro la tolleranza" })]));
+    r.voci.forEach((v, i) => {
+      if (i === 0 && !v.fisso && !v.aggiunta) art.appendChild(el("div", { class:"between" }, [el("span", { style:"font-weight:600", text: v.f.nome }), grammi(v.g)]));
+      else art.appendChild(rigaVoce(v.f.nome, v.g, v.fisso ? "fisso" : (v.aggiunta ? "agg" : null)));
+    });
+    art.appendChild(gauges(mp.t, r.d));
+    const b = S.risPasto.base;
+    if (S.risPasto.aggiunte.length){
+      const mancaP = mp.t[1] - b.m[1], mancaG = mp.t[3] - b.m[3];
+      art.appendChild(el("p", { class:"small", text:"Senza l\u2019aggiunta mancherebbero " + fmt1(Math.abs(mancaP)) + " g di proteine e " + fmt1(Math.abs(mancaG)) + " g di grassi." }));
+    }
+    out.push(art);
+  }
+  return out;
+}
+async function chiediPiatto(){
+  const nome = prompt("Nome del piatto (es. pasta alle vongole del ristorante)");
+  if (!nome) return;
+  S.busy = "piatto"; render();
+  try {
+    const d = await chiediClaude("Sei un database nutrizionale. Restituisci SOLO JSON valido con i valori medi per 100 g di prodotto pronto del piatto italiano indicato, senza testo aggiuntivo. Formato: {\"nome\":string,\"kcal\":number,\"proteine\":number,\"carboidrati\":number,\"grassi\":number}. Carboidrati = carboidrati disponibili, fibra esclusa. Piatto: " + nome, { modelTier: "default" });
+    if (!d || !atwaterOk(+d.kcal, +d.proteine, +d.carboidrati, +d.grassi)) throw new Error("valori non coerenti");
+    const f = { nome: (d.nome || nome) + " (stima)", k: +d.kcal, p: +d.proteine, c: +d.carboidrati, g: +d.grassi, stima: true };
+    S.disp.push({ f, g: 0 }); S.risPasto = null;
+  } catch(e){ alert("Non sono riuscito a ottenere valori affidabili. Inserisci il piatto dalla scheda Etichetta."); }
+  S.busy = ""; render();
+}
+</script>
+
+<script>
+"use strict";
+/* ================= ETICHETTA ================= */
+function daEtichetta(){
+  const out = new Map();
+  if (!S.piano) return [];
+  for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci){
+    if (risolvi(v)) continue;
+    const k = norm(v.nome);
+    if (!out.has(k)) out.set(k, { nome: v.nome, usi: [] });
+    out.get(k).usi.push(g.giorno.slice(0,3).toLowerCase() + " " + p.ora + ", " + v.g + " g");
+  }
+  return [...out.values()];
+}
+function vistaEtichetta(){
+  const out = [];
+  out.push(el("header", {}, [el("h1", { text:"Etichetta" }), el("p", { class:"sub", text:"Prodotti confezionati che non sono nelle tabelle CREA." })]));
+  const azioni = el("div", { style:"display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px" });
+  const tile = (icona, titolo, sotto, on) => el("button", { type:"button", class:"card", style:"align-items:flex-start;text-align:left;min-height:120px;border:0", onclick: on }, [
+    el("span", { style:"color:var(--ok);display:flex" }, [svg(icona, 28)]),
+    el("span", { style:"font-weight:600;font-size:15px", text: titolo }),
+    el("span", { class:"small", text: sotto })
+  ]);
+  azioni.appendChild(tile("scan", "Scansiona il codice a barre", "Riconosce i prodotti gi\u00e0 salvati", scansiona));
+  azioni.appendChild(tile("cam", "Fotografa l\u2019etichetta", "Legge i valori per 100 g", fotografa));
+  out.push(azioni);
+  if (S.busy) out.push(el("div", { class:"card row" }, [el("div", { class:"spin" }), el("span", { class:"small", text: S.busy })]));
+  const manca = daEtichetta();
+  if (manca.length){
+    const card = el("div", { class:"card", style:"gap:0" });
+    manca.forEach((m, i) => card.appendChild(el("div", { class:"item", style: i ? "" : "border-top:0" }, [
+      el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
+        el("span", { style:"font-weight:600", text: m.nome }),
+        el("span", { class:"small", text: m.usi.slice(0,3).join(" \u00b7 ") })
+      ]),
+      el("span", { class:"tag w", text:"da fotografare" })
+    ])));
+    out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [
+      el("div", { class:"between" }, [el("h3", { text:"Da acquisire dal tuo piano" }), el("span", { class:"small num", text: String(manca.length) })]), card]));
+  }
+  const salvati = el("div", { class:"card", style:"gap:0" });
+  if (!S.prodotti.length) salvati.appendChild(el("p", { class:"small", text:"Nessun prodotto salvato. Fotografa un\u2019etichetta per aggiungerne uno." }));
+  S.prodotti.forEach((p, i) => salvati.appendChild(el("div", { class:"item", style: i ? "" : "border-top:0" }, [
+    el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
+      el("span", { style:"font-weight:600", text: p.nome }),
+      el("span", { class:"small num", text: fmtk(p.k) + " kcal \u00b7 P " + fmt1(p.p) + " \u00b7 C " + fmt1(p.c) + " \u00b7 G " + fmt1(p.g) + (p.ean ? " \u00b7 " + p.ean : "") })
+    ]),
+    el("button", { type:"button", class:"mini", text:"Modifica", onclick(){ formProdotto(p); } })
+  ])));
+  out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [el("h3", { text:"Salvati" }), salvati]));
+  out.push(el("button", { type:"button", class:"btn2", text:"Inserisci i valori a mano", onclick(){ formProdotto({}); } }));
+  return out;
+}
+function formProdotto(p){
+  const d = el("div", { class:"card" });
+  const campi = {};
+  const campo = (k, lab, v, num) => { const i = el("input", { type: num ? "text" : "text", inputmode: num ? "decimal" : null, value: v == null ? "" : String(v).replace(".", ","), placeholder: num ? "0" : "" });
+    campi[k] = i; return el("div", { style:"display:flex;flex-direction:column;gap:6px" }, [el("label", { text: lab }), i]); };
+  d.appendChild(el("h2", { text: p.nome ? "Modifica prodotto" : "Nuovo prodotto" }));
+  d.appendChild(campo("nome", "Prodotto", p.nome));
+  d.appendChild(campo("ean", "Codice a barre", p.ean));
+  d.appendChild(el("p", { class:"small", text:"Valori per 100 g dell\u2019etichetta. Carboidrati: se l\u2019etichetta \u00e8 extra UE, togli la fibra." }));
+  const gr = el("div", { style:"display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px" }, [
+    campo("k", "Energia (kcal)", p.k, 1), campo("p", "Proteine (g)", p.p, 1), campo("c", "Carboidrati (g)", p.c, 1), campo("g", "Grassi (g)", p.g, 1)]);
+  d.appendChild(gr);
+  const msg = el("p", { class:"small" });
+  d.appendChild(msg);
+  d.appendChild(el("button", { type:"button", class:"btn", text:"Salva prodotto", async onclick(){
+    const n = (campi.nome.value || "").trim();
+    const num = k => parseFloat((campi[k].value || "").replace(",", "."));
+    const pr = { nome: n, ean: (campi.ean.value || "").trim(), k: num("k"), p: num("p"), c: num("c"), g: num("g") };
+    if (!n || [pr.k, pr.p, pr.c, pr.g].some(x => !isFinite(x))){ msg.textContent = "Compila nome e quattro valori."; return; }
+    if (!atwaterOk(pr.k, pr.p, pr.c, pr.g)){ msg.textContent = "I valori non tornano: le kcal non corrispondono ai macro. Controlla l\u2019etichetta."; return; }
+    await salvaProdotto(pr); render();
+  } }));
+  S.modale = d; render();
+}
+function fileInput(cb, capture){
+  const i = el("input", { type:"file", accept:"image/*", capture: capture ? "environment" : null, class:"hide" });
+  i.addEventListener("change", () => { if (i.files && i.files[0]) cb(i.files[0]); });
+  document.body.appendChild(i); i.click(); setTimeout(() => i.remove(), 60000);
+}
+async function ridimensiona(file, lato){
+  const bmp = await createImageBitmap(file);
+  const sc = Math.min(1, lato / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(bmp.width * sc); cv.height = Math.round(bmp.height * sc);
+  cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+  return await new Promise(r => cv.toBlob(r, "image/jpeg", 0.9));
+}
+async function fotografa(){
+  if (!SAMPLE || !(LIMITS && LIMITS.images)){ formProdotto({}); return; }
+  fileInput(async file => {
+    S.busy = "Leggo l\u2019etichetta\u2026"; render();
+    try {
+      const img = await ridimensiona(file, 1400);
+      const d = await chiediClaude([{ role:"user", content:"Leggi la dichiarazione nutrizionale in questa foto e restituisci SOLO JSON: {\"nome\":string,\"kcal\":number,\"proteine\":number,\"carboidrati\":number,\"grassi\":number,\"per\":\"100g\"|\"porzione\"}. I valori devono essere per 100 g. Se l\u2019etichetta riporta solo la porzione, converti e indica per=porzione. Non aggiungere commenti." }], { images: [img], modelTier: "default" });
+      S.busy = "";
+      if (!d || !atwaterOk(+d.kcal, +d.proteine, +d.carboidrati, +d.grassi)){ alert("Lettura non affidabile: i valori non tornano con le calorie. Inseriscili a mano."); formProdotto({}); return; }
+      formProdotto({ nome: d.nome || "", k: +d.kcal, p: +d.proteine, c: +d.carboidrati, g: +d.grassi });
+    } catch(e){ S.busy = ""; alert("Lettura non riuscita. Inserisci i valori a mano."); formProdotto({}); }
+  }, true);
+}
+let ZX = null;
+function carica_script(src){
+  return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); });
+}
+async function scansiona(){
+  fileInput(async file => {
+    S.busy = "Leggo il codice\u2026"; render();
+    try {
+      if (!ZX){ await carica_script("https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"); ZX = window.ZXing; }
+      const url = URL.createObjectURL(file);
+      const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+      const reader = new ZX.BrowserMultiFormatReader();
+      const res = await reader.decodeFromImageElement(img);
+      URL.revokeObjectURL(url);
+      const ean = res.getText();
+      S.busy = "";
+      const p = S.prodotti.find(x => x.ean === ean);
+      if (p){ alert(p.nome + ": gi\u00e0 in archivio."); S.disp.push({ f: { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g }, g: 0 }); render(); }
+      else formProdotto({ ean });
+    } catch(e){ S.busy = ""; alert("Codice non riconosciuto. Riprova con una foto pi\u00f9 nitida o inserisci il prodotto a mano."); render(); }
+  }, true);
+}
+/* ================= PIANO ================= */
+function vistaPiano(){
+  const out = [];
+  const p = S.piano;
+  if (!p || !p.giorni || !p.giorni.length){
+    return [el("header", {}, [el("h1", { text:"Piano" }), el("p", { class:"sub", text:"Nessun piano caricato." })]),
+      el("section", { class:"card" }, [
+        el("p", { class:"small", text:"Importa il file del piano, oppure caricane uno nuovo in PDF se Claude \u00e8 disponibile." }),
+        el("button", { type:"button", class:"btn", text:"Importa piano o backup", onclick: importaBackup }),
+        SAMPLE ? el("button", { type:"button", class:"btn2", text:"Carica nuovo PDF", onclick: caricaPdf }) : null ])];
+  }
+  out.push(el("header", {}, [el("h1", { text:"Piano" }), el("p", { class:"sub", text: (p.titolo || "Piano") + ". " + p.giorni.length + " giorni caricati." })]));
+  const azioni = el("div", { style:"display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px" }, [
+    SAMPLE ? el("button", { type:"button", class:"btn", onclick: caricaPdf }, [svg("up", 20), el("span", { text:"Carica nuovo PDF" })])
+           : el("button", { type:"button", class:"btn", onclick: importaBackup }, [svg("up", 20), el("span", { text:"Importa piano" })]),
+    el("button", { type:"button", class:"btn2", style:"padding:0 16px", text:"Backup", onclick: esportaBackup })
+  ]);
+  out.push(azioni);
+  if (SAMPLE) out.push(el("div", { style:"display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px" }, [
+    el("button", { type:"button", class:"btn2", text:"Importa backup", onclick: importaBackup }),
+    el("button", { type:"button", class:"btn2", text:"Esporta backup", onclick: esportaBackup })]));
+  if (S.busy) out.push(el("div", { class:"card row" }, [el("div", { class:"spin" }), el("span", { class:"small", text: S.busy })]));
+  const card = el("section", { class:"card", style:"gap:0" }, [el("h2", { text:"Totali giornalieri", style:"margin-bottom:10px" })]);
+  let somma = zero(), n = 0, incompleti = 0;
+  for (const g of p.giorni){
+    const r = macroGiorno(g);
+    if (r.mancanti.length) incompleti++; else { somma = [somma[0]+r.t[0], somma[1]+r.t[1], somma[2]+r.t[2], somma[3]+r.t[3]]; n++; }
+    const barra = el("div", { style:"height:6px;border-radius:3px;background:var(--track)" }, [
+      el("div", { style:"height:6px;border-radius:3px;background:var(--ok);width:" + Math.min(100, r.t[0]/2300*100).toFixed(1) + "%" })]);
+    card.appendChild(el("div", { style:"display:grid;grid-template-columns:92px minmax(0,1fr) 92px;gap:10px;align-items:center;min-height:54px;border-top:1px solid var(--line)" }, [
+      el("div", { style:"display:flex;flex-direction:column" }, [el("span", { style:"font-weight:600;font-size:15px", text: g.giorno }), el("span", { class:"small", text: g.attivita || "" })]),
+      el("div", { style:"display:flex;flex-direction:column;gap:5px" }, [
+        el("span", { class:"num", style:"font-size:15px;font-weight:600", text: fmtk(r.t[0]) + " kcal" + (r.mancanti.length ? " (parziale)" : "") }), barra]),
+      el("span", { class:"num small", style:"text-align:right", text: Math.round(r.t[1]) + " / " + Math.round(r.t[2]) + " / " + Math.round(r.t[3]) })
+    ]));
+  }
+  out.push(card);
+  const media = n ? somma.map(x => x/n) : zero();
+  const mc = el("section", { class:"card" }, [el("h2", { text:"Media dei giorni completi" }), valori(media)]);
+  if (incompleti) mc.appendChild(avviso(incompleti + (incompleti === 1 ? " giorno contiene" : " giorni contengono") + " alimenti senza valori: la media \u00e8 calcolata sui giorni completi.", "w"));
+  if (p.totali_pdf){
+    const scarti = p.giorni.map((g, i) => { const t = p.totali_pdf[i]; if (!t) return null; const r = macroGiorno(g); return r.mancanti.length ? null : Math.abs(r.t[0] - t[0]); }).filter(x => x !== null);
+    if (scarti.length) mc.appendChild(el("p", { class:"small", text:"Scarto massimo tra i totali del PDF e il ricalcolo CREA: " + Math.round(Math.max.apply(null, scarti)) + " kcal." }));
+  }
+  out.push(mc);
+  const conf = [];
+  for (const g of p.giorni) for (const pa of g.pasti) for (const v of pa.voci) if (v.conf && !conf.find(x => x.nome === v.nome)) conf.push(v);
+  if (conf.length){
+    const cc = el("div", { class:"card", style:"gap:0" });
+    conf.forEach((v, i) => cc.appendChild(el("div", { class:"item", style: i ? "" : "border-top:0" }, [
+      el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
+        el("span", { style:"font-weight:600", text: v.nome }), el("span", { class:"small", text:"CREA: " + v.crea })]),
+      el("button", { type:"button", class:"mini", text:"Conferma", async onclick(){
+        for (const g2 of S.piano.giorni) for (const p2 of g2.pasti) for (const v2 of p2.voci) if (norm(v2.nome) === norm(v.nome)) delete v2.conf;
+        await salvaPiano(S.piano); render();
+      } })
+    ])));
+    out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [el("h3", { text:"Abbinamenti da confermare" }), cc]));
+  }
+  out.push(el("p", { class:"small", text:"Valori per 100 g: CREA 2019. Prodotti di marca: valori dall\u2019etichetta." }));
+  return out;
+}
+async function caricaPdf(){
+  if (!SAMPLE){ alert("La lettura del PDF richiede Claude, non disponibile in questa vista."); return; }
+  const i = el("input", { type:"file", accept:"application/pdf", class:"hide" });
+  i.addEventListener("change", async () => {
+    const file = i.files && i.files[0]; if (!file) return;
+    S.busy = "Leggo il PDF\u2026"; render();
+    try {
+      if (!window.pdfjsLib){
+        await carica_script("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      }
+      const buf = await file.arrayBuffer();
+      const doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+      let testo = "";
+      for (let n = 1; n <= doc.numPages; n++){
+        const pg = await doc.getPage(n);
+        const tc = await pg.getTextContent();
+        testo += tc.items.map(x => x.str).join(" ") + "\n";
+      }
+      S.busy = "Interpreto il piano\u2026"; render();
+      const schema = "{\"titolo\":string,\"giorni\":[{\"giorno\":string,\"attivita\":string,\"pasti\":[{\"ora\":string,\"voci\":[{\"nome\":string,\"g\":number}]}],\"totali\":[kcal,proteine,carboidrati,grassi]}]}";
+      const d = await chiediClaude("Estrai il piano alimentare dal testo qui sotto e restituisci SOLO JSON valido con questo schema: " + schema +
+        ". Regole: grammature in grammi (1 ml = 1 g); nessun commento; nomi degli alimenti come nel piano. Testo:\n\n" + testo.slice(0, 30000), { modelTier: "complex" });
+      if (!d || !Array.isArray(d.giorni) || !d.giorni.length) throw new Error("schema");
+      for (const g of d.giorni){
+        if (!Array.isArray(g.pasti)) throw new Error("schema");
+        for (const pa of g.pasti) for (const v of pa.voci){
+          if (typeof v.nome !== "string" || !isFinite(+v.g) || +v.g <= 0 || +v.g > 2000) throw new Error("valori");
+          v.g = Math.round(+v.g);
+          const f = cerca(v.nome, 1)[0];
+          if (f) { v.crea = f.nome; v.conf = true; }
+        }
+      }
+      d.totali_pdf = d.giorni.map(g => g.totali || null);
+      S.busy = ""; S.giorno = 0; S.pasto = 0;
+      if (confirm("Trovati " + d.giorni.length + " giorni. Sostituisco il piano attuale?")) await salvaPiano(d);
+      render();
+    } catch(e){ S.busy = ""; alert("Non sono riuscito a leggere il PDF in modo affidabile. Il piano attuale resta invariato."); render(); }
+  });
+  document.body.appendChild(i); i.click(); setTimeout(() => i.remove(), 120000);
+}
+/* ================= render ================= */
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  if (S.modale){ app.appendChild(el("button", { type:"button", class:"btn2", text:"Chiudi", onclick(){ S.modale = null; render(); } })); app.appendChild(S.modale); }
+  else {
+    const v = S.tab === "sost" ? vistaSost() : S.tab === "pasto" ? vistaPasto() : S.tab === "eti" ? vistaEtichetta() : vistaPiano();
+    for (const n of v) if (n) app.appendChild(n);
+  }
+  const nav = document.getElementById("tabs");
+  nav.innerHTML = "";
+  [["sost","Sostituisci","sost"],["pasto","Pasto","pasto"],["eti","Etichetta","eti"],["piano","Piano","piano"]].forEach(([id, lab, ic]) => {
+    nav.appendChild(el("button", { type:"button", "aria-current": S.tab === id ? "page" : null, onclick(){ S.tab = id; S.modale = null; render(); } }, [svg(ic, 26), el("span", { text: lab })]));
+  });
+  window.scrollTo(0, 0);
+}
+render();
+carica();
+</script>
+</body>
+</html>
