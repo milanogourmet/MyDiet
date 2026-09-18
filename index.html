@@ -827,18 +827,38 @@ function vistaPiano(){
   for (const g of p.giorni) for (const pa of g.pasti) for (const v of pa.voci) if (v.conf && !conf.find(x => x.nome === v.nome)) conf.push(v);
   if (conf.length){
     const cc = el("div", { class:"card", style:"gap:0" });
-    conf.forEach((v, i) => cc.appendChild(el("div", { class:"item", style: i ? "" : "border-top:0" }, [
-      el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
-        el("span", { style:"font-weight:600", text: v.nome }), el("span", { class:"small", text:"CREA: " + v.crea })]),
-      el("button", { type:"button", class:"mini", text:"Conferma", async onclick(){
-        for (const g2 of S.piano.giorni) for (const p2 of g2.pasti) for (const v2 of p2.voci) if (norm(v2.nome) === norm(v.nome)) delete v2.conf;
-        await salvaPiano(S.piano); render();
-      } })
-    ])));
+    conf.forEach((v, i) => {
+      const riga = el("div", { class:"item", style: i ? "" : "border-top:0" }, [
+        el("div", { style:"display:flex;flex-direction:column;gap:2px;min-width:0" }, [
+          el("span", { style:"font-weight:600", text: v.nome }),
+          el("span", { class:"small", text:"CREA: " + v.crea })]),
+        el("div", { class:"row" }, [
+          el("button", { type:"button", class:"mini", text:"Cambia", onclick(){ pannello.classList.toggle("hide"); if (!pannello.classList.contains("hide")) inp.focus(); } }),
+          el("button", { type:"button", class:"mini", style:"background:var(--okbg)", text:"Conferma", async onclick(){ await applicaAbbinamento(v.nome, v.crea); } })
+        ])
+      ]);
+      const sug = el("div", { style:"display:flex;flex-direction:column;gap:4px" });
+      const inp = el("input", { type:"text", placeholder:"Cerca nelle tabelle CREA", autocomplete:"off" });
+      inp.addEventListener("input", () => {
+        sug.innerHTML = "";
+        for (const f of cerca(inp.value, 8))
+          sug.appendChild(el("button", { type:"button", class:"mini", style:"height:auto;padding:8px 12px;font-weight:500;text-align:left", text: f.nome,
+            async onclick(){ await applicaAbbinamento(v.nome, f.nome); } }));
+        if (inp.value.trim().length > 1 && !sug.children.length) sug.appendChild(el("p", { class:"small", text:"Nessuna voce CREA con questo nome." }));
+      });
+      const pannello = el("div", { class:"hide", style:"display:flex;flex-direction:column;gap:8px;padding:0 0 12px" }, [inp, sug]);
+      cc.appendChild(riga); cc.appendChild(pannello);
+    });
     out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [el("h3", { text:"Abbinamenti da confermare" }), cc]));
   }
   out.push(el("p", { class:"small", text:"Valori per 100 g: CREA 2019. Prodotti di marca: valori dall\u2019etichetta." }));
   return out;
+}
+async function applicaAbbinamento(nomePiano, nomeCrea){
+  for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci)
+    if (norm(v.nome) === norm(nomePiano)){ v.crea = nomeCrea; delete v.conf; }
+  await salvaPiano(S.piano);
+  render();
 }
 async function caricaPdf(){
   if (!SAMPLE){ alert("La lettura del PDF richiede Claude, non disponibile in questa vista."); return; }
