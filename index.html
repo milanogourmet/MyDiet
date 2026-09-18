@@ -437,15 +437,16 @@ function chipsInput(lista, onChange, placeholder){
       sug.appendChild(el("button", { type:"button", class:"mini", style:"height:auto;padding:8px 12px;font-weight:500;text-align:left", text: f.nome,
         onclick(){ const g = parseVoce(inp.value).g; inp.value = ""; sug.innerHTML = ""; metti(f.nome, g); } }));
   });
-  inp.addEventListener("keydown", e => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
+  inp.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); conferma(); } });
+  function conferma(){
     const parti = inp.value.split(",").map(x => x.trim()).filter(Boolean);
+    if (!parti.length) return;
     inp.value = ""; sug.innerHTML = "";
     for (const p of parti){ const v = parseVoce(p); metti(v.nome, v.g); }
-  });
+  }
   disegna();
   wrap.appendChild(box); wrap.appendChild(sug);
+  wrap.commit = conferma;
   return wrap;
 }
 async function chiediClaude(prompt, opts){
@@ -507,11 +508,16 @@ function vistaSost(){
   out.push(el("header", {}, [el("h1", { text:"Sostituisci" }), el("p", { class:"sub", text:"Stesse calorie e stessi macro, entro la tolleranza." })]));
   const card = el("form", { class:"card", onsubmit(e){ e.preventDefault(); } });
   card.appendChild(el("label", { text:"Alimenti del piano" }));
-  card.appendChild(chipsInput(S.sel, () => { S.risultati = null; }, "Aggiungi, separa con una virgola"));
+  const ci = chipsInput(S.sel, () => { S.risultati = null; msg.textContent = ""; }, "Aggiungi, separa con una virgola");
+  card.appendChild(ci);
   card.appendChild(el("p", { class:"small", text:"Scrivi alimento e grammi, es. salmone 180 g, patate 170 g." }));
+  const msg = el("p", { class:"small", style:"color:var(--no);font-weight:600" });
+  card.appendChild(msg);
   const btn = el("button", { type:"button", class:"btn", text:"Trova sostituti", onclick(){
+    ci.commit();
     const voci = S.sel.filter(v => v.g > 0);
-    if (!voci.length) return;
+    if (!voci.length){ msg.textContent = S.sel.length ? "Indica i grammi di ogni alimento, per esempio salmone 180 g." : "Aggiungi almeno un alimento con i grammi."; return; }
+    msg.textContent = "";
     S.risultati = voci.map(v => {
       const target = macro([v]);
       return { voce: v, target, gruppi: sostituti(target, [v.f.nome]) };
@@ -611,10 +617,15 @@ function vistaPasto(){
   if (mp.mancanti.length) card.appendChild(avviso("Mancano i valori di: " + mp.mancanti.join(", ") + ". Aggiungili dalla scheda Etichetta, altrimenti il totale \u00e8 parziale.", "no"));
   out.push(card);
   const disp = el("section", { class:"card" }, [el("label", { text:"Cosa hai a disposizione?" })]);
-  disp.appendChild(chipsInput(S.disp, () => { S.risPasto = null; }, "Aggiungi, separa con una virgola"));
+  const ci2 = chipsInput(S.disp, () => { S.risPasto = null; msg2.textContent = ""; }, "Aggiungi, separa con una virgola");
+  disp.appendChild(ci2);
   disp.appendChild(el("p", { class:"small", text:"I grammi che indichi restano fissi, gli altri li calcola l\u2019app." }));
+  const msg2 = el("p", { class:"small", style:"color:var(--no);font-weight:600" });
+  disp.appendChild(msg2);
   disp.appendChild(el("button", { type:"button", class:"btn", text:"Calcola", onclick(){
-    if (!S.disp.length || mp.mancanti.length) return;
+    ci2.commit();
+    if (!S.disp.length){ msg2.textContent = "Aggiungi almeno un alimento."; return; }
+    if (mp.mancanti.length){ msg2.textContent = "Prima completa i valori mancanti del pasto dalla scheda Etichetta."; return; }
     S.risPasto = integra(mp.t, S.disp.map(v => ({ f: v.f, g: v.g })));
     render();
   } }));
