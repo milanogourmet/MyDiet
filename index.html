@@ -792,7 +792,11 @@ function formProdotto(p){
   const campi = {};
   const campo = (k, lab, v, num) => { const i = el("input", { type: num ? "text" : "text", inputmode: num ? "decimal" : null, value: v == null ? "" : String(v).replace(".", ","), placeholder: num ? "0" : "" });
     campi[k] = i; return el("div", { style:"display:flex;flex-direction:column;gap:6px" }, [el("label", { text: lab }), i]); };
-  d.appendChild(el("h2", { text: p.nome ? "Modifica prodotto" : "Nuovo prodotto" }));
+  d.appendChild(el("h2", { text: p.nome ? "Controlla i valori" : "Nuovo prodotto" }));
+  if (p.fonte) d.appendChild(avviso("Valori da " + p.fonte + ", inseriti da altri utenti: controllali sull\u2019etichetta prima di salvare.", "w"));
+  else if (!isFinite(+p.k)) d.appendChild(el("p", { class:"small", text:"Il codice a barre d\u00e0 solo il numero del prodotto. I valori si leggono dall\u2019etichetta." }));
+  if (SAMPLE && LIMITS && LIMITS.images)
+    d.appendChild(el("button", { type:"button", class:"btn2", text:"Fotografa l\u2019etichetta e compila", onclick(){ fotografa(campi.ean ? campi.ean.value : p.ean); } }));
   d.appendChild(campo("nome", "Prodotto", p.nome));
   d.appendChild(campo("ean", "Codice a barre", p.ean));
   d.appendChild(el("p", { class:"small", text:"Valori per 100 g dell\u2019etichetta. Carboidrati: se l\u2019etichetta \u00e8 extra UE, togli la fibra." }));
@@ -824,8 +828,8 @@ async function ridimensiona(file, lato){
   cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
   return await new Promise(r => cv.toBlob(r, "image/jpeg", 0.9));
 }
-async function fotografa(){
-  if (!SAMPLE || !(LIMITS && LIMITS.images)){ formProdotto({}); return; }
+async function fotografa(ean){
+  if (!SAMPLE || !(LIMITS && LIMITS.images)){ formProdotto({ ean: ean || "" }); return; }
   fileInput(async file => {
     S.busy = "Leggo l\u2019etichetta\u2026"; render();
     try {
@@ -833,7 +837,7 @@ async function fotografa(){
       const d = await chiediClaude([{ role:"user", content:"Leggi la dichiarazione nutrizionale in questa foto e restituisci SOLO JSON: {\"nome\":string,\"kcal\":number,\"proteine\":number,\"carboidrati\":number,\"grassi\":number,\"per\":\"100g\"|\"porzione\"}. I valori devono essere per 100 g. Se l\u2019etichetta riporta solo la porzione, converti e indica per=porzione. Non aggiungere commenti." }], { images: [img], modelTier: "default" });
       S.busy = "";
       if (!d || !atwaterOk(+d.kcal, +d.proteine, +d.carboidrati, +d.grassi)){ alert("Lettura non affidabile: i valori non tornano con le calorie. Inseriscili a mano."); formProdotto({}); return; }
-      formProdotto({ nome: d.nome || "", k: +d.kcal, p: +d.proteine, c: +d.carboidrati, g: +d.grassi });
+      formProdotto({ nome: d.nome || "", ean: ean || "", k: +d.kcal, p: +d.proteine, c: +d.carboidrati, g: +d.grassi });
     } catch(e){ S.busy = ""; alert("Lettura non riuscita. Inserisci i valori a mano."); formProdotto({}); }
   }, true);
 }
@@ -910,6 +914,26 @@ async function cifreDaClaude(file){
     return t || null;
   } catch(e){ return null; }
 }
+async function cercaOFF(ean){
+  if (/claude\.ai$/.test(location.hostname)) return null;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const r = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(ean) + ".json?fields=product_name,brands,nutriments", { signal: ctrl.signal });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const p = d && d.product;
+    if (!p) return null;
+    const n = p.nutriments || {};
+    const kcal = +(n["energy-kcal_100g"] != null ? n["energy-kcal_100g"] : (n.energy_100g != null ? n.energy_100g / 4.184 : NaN));
+    const pr = +n.proteins_100g, ca = +n.carbohydrates_100g, gr = +n.fat_100g;
+    if (![kcal, pr, ca, gr].every(x => isFinite(x))) return null;
+    const nome = [p.brands ? String(p.brands).split(",")[0].trim() : "", p.product_name || ""].filter(Boolean).join(" ");
+    const val = { nome: nome || ("Prodotto " + ean), ean: ean, k: Math.round(kcal * 10) / 10, p: pr, c: ca, g: gr, fonte: "Open Food Facts" };
+    return atwaterOk(val.k, val.p, val.c, val.g) ? val : null;
+  } catch(e){ return null; }
+  finally { clearTimeout(t); }
+}
 function trovaPerEan(ean){ return S.prodotti.find(x => x.ean === ean); }
 async function scansiona(){
   fileInput(async file => {
@@ -928,8 +952,11 @@ async function scansiona(){
     if (!ean){ render(); return; }
     if (!eanValido(ean) && !confirm("Il codice " + ean + " non supera il controllo di validit\u00e0. Lo uso lo stesso?")){ render(); return; }
     const p = trovaPerEan(ean);
-    if (p){ S.disp.push({ f: { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g }, g: 0 }); S.risPasto = null; alert(p.nome + ": prodotto gi\u00e0 in archivio, aggiunto tra quelli disponibili."); render(); }
-    else formProdotto({ ean });
+    if (p){ S.disp.push({ f: { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g }, g: 0 }); S.risPasto = null; alert(p.nome + ": prodotto gi\u00e0 in archivio, aggiunto tra quelli disponibili."); render(); return; }
+    S.busy = "Cerco i valori del prodotto\u2026"; render();
+    const trovato = await cercaOFF(ean);
+    S.busy = "";
+    formProdotto(trovato || { ean: ean });
   }, true);
 }
 /* ================= PIANO ================= */
