@@ -839,24 +839,97 @@ async function fotografa(){
 }
 let ZX = null;
 function carica_script(src){
-  return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); });
+  return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("libreria")); document.head.appendChild(s); });
 }
+async function immagine(file){
+  if (window.createImageBitmap) return await createImageBitmap(file);
+  const url = URL.createObjectURL(file);
+  try { return await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; }); }
+  finally { setTimeout(() => URL.revokeObjectURL(url), 5000); }
+}
+function tela(img, scala, ruota, ritaglio){
+  const w0 = img.width || img.naturalWidth, h0 = img.height || img.naturalHeight;
+  const sx = ritaglio ? 0 : 0, sy = ritaglio ? Math.round(h0 * 0.25) : 0;
+  const sw = w0, sh = ritaglio ? Math.round(h0 * 0.5) : h0;
+  const w = Math.max(1, Math.round(sw * scala)), h = Math.max(1, Math.round(sh * scala));
+  const cv = document.createElement("canvas");
+  cv.width = ruota ? h : w; cv.height = ruota ? w : h;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  ctx.save();
+  if (ruota){ ctx.translate(cv.width / 2, cv.height / 2); ctx.rotate(Math.PI / 2); ctx.translate(-w / 2, -h / 2); }
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+  ctx.restore();
+  return cv;
+}
+function luminanza(cv){
+  const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+  const lum = new Uint8ClampedArray(cv.width * cv.height);
+  for (let i = 0, j = 0; j < lum.length; i += 4, j++) lum[j] = (d[i] * 306 + d[i+1] * 601 + d[i+2] * 117 + 512) >> 10;
+  return lum;
+}
+function eanValido(t){
+  if (!/^\d{8}$|^\d{12}$|^\d{13}$/.test(t)) return false;
+  const c = t.split("").map(Number), v = c.pop();
+  let s = 0;
+  c.reverse().forEach((n, i) => { s += n * (i % 2 === 0 ? 3 : 1); });
+  return (10 - s % 10) % 10 === v;
+}
+async function leggiCodice(file){
+  if (!ZX){ await carica_script("https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"); ZX = window.ZXing; }
+  if (!ZX || !ZX.MultiFormatReader) throw new Error("libreria");
+  const hints = new Map();
+  hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128, ZX.BarcodeFormat.ITF]);
+  hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+  const lettore = new ZX.MultiFormatReader();
+  lettore.setHints(hints);
+  const img = await immagine(file);
+  const lato = Math.max(img.width || img.naturalWidth, img.height || img.naturalHeight);
+  const scale = [Math.min(1, 1600 / lato), Math.min(1, 1000 / lato), 1];
+  for (const ritaglio of [false, true])
+    for (const ruota of [false, true])
+      for (const s of scale){
+        let cv;
+        try { cv = tela(img, s, ruota, ritaglio); } catch(e){ continue; }
+        try {
+          const src = new ZX.RGBLuminanceSource(luminanza(cv), cv.width, cv.height);
+          const bmp = new ZX.BinaryBitmap(new ZX.HybridBinarizer(src));
+          const res = lettore.decode(bmp, hints);
+          const t = (res.getText() || "").trim();
+          if (t) return t;
+        } catch(e){ /* nessun codice in questa variante */ }
+        finally { try { lettore.reset(); } catch(e){} }
+      }
+  throw new Error("nessun codice");
+}
+async function cifreDaClaude(file){
+  if (!SAMPLE || !(LIMITS && LIMITS.images)) return null;
+  try {
+    const img = await ridimensiona(file, 1400);
+    const d = await chiediClaude([{ role:"user", content:"Nella foto c\u2019\u00e8 un codice a barre di un prodotto alimentare. Restituisci SOLO JSON {\"ean\":string} con le cifre stampate sotto le barre, senza spazi. Se non sono leggibili usa stringa vuota." }], { images: [img], modelTier: "default" });
+    const t = d && typeof d.ean === "string" ? d.ean.replace(/\D/g, "") : "";
+    return t || null;
+  } catch(e){ return null; }
+}
+function trovaPerEan(ean){ return S.prodotti.find(x => x.ean === ean); }
 async function scansiona(){
   fileInput(async file => {
     S.busy = "Leggo il codice\u2026"; render();
-    try {
-      if (!ZX){ await carica_script("https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"); ZX = window.ZXing; }
-      const url = URL.createObjectURL(file);
-      const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
-      const reader = new ZX.BrowserMultiFormatReader();
-      const res = await reader.decodeFromImageElement(img);
-      URL.revokeObjectURL(url);
-      const ean = res.getText();
-      S.busy = "";
-      const p = S.prodotti.find(x => x.ean === ean);
-      if (p){ alert(p.nome + ": gi\u00e0 in archivio."); S.disp.push({ f: { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g }, g: 0 }); render(); }
-      else formProdotto({ ean });
-    } catch(e){ S.busy = ""; alert("Codice non riconosciuto. Riprova con una foto pi\u00f9 nitida o inserisci il prodotto a mano."); render(); }
+    let ean = null, motivo = "";
+    try { ean = await leggiCodice(file); }
+    catch(e){ motivo = e && e.message === "libreria" ? "libreria" : "nessuno"; }
+    if (!ean && motivo !== "libreria"){ S.busy = "Provo a leggere le cifre\u2026"; render(); ean = await cifreDaClaude(file); }
+    S.busy = ""; 
+    if (!ean){
+      const manuale = prompt(motivo === "libreria"
+        ? "Non riesco a caricare il lettore di codici. Scrivi le cifre sotto il codice a barre:"
+        : "Codice non riconosciuto. Scrivi le cifre stampate sotto il codice a barre:");
+      ean = manuale ? manuale.replace(/\D/g, "") : "";
+    }
+    if (!ean){ render(); return; }
+    if (!eanValido(ean) && !confirm("Il codice " + ean + " non supera il controllo di validit\u00e0. Lo uso lo stesso?")){ render(); return; }
+    const p = trovaPerEan(ean);
+    if (p){ S.disp.push({ f: { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g }, g: 0 }); S.risPasto = null; alert(p.nome + ": prodotto gi\u00e0 in archivio, aggiunto tra quelli disponibili."); render(); }
+    else formProdotto({ ean });
   }, true);
 }
 /* ================= PIANO ================= */
