@@ -103,7 +103,16 @@ const PIANO0 = null;          // piano settimana 4 letto dal PDF
 const F = DB.map(r => ({ nome: r[0], k: r[1], p: r[2], c: r[3], g: r[4], warn: !!r[5] }));
 const BYNAME = new Map(F.map(f => [f.nome.toLowerCase(), f]));
 const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-const NORMIDX = F.map(f => ({ f, n: norm(f.nome) }));
+let CAT = F.slice();
+let IDX = F.map(f => ({ f, n: norm(f.nome) }));
+let BYNAME2 = new Map(BYNAME); for (const f of F) if (!BYNAME2.has(norm(f.nome))) BYNAME2.set(norm(f.nome), f);
+function impostaAlimentiPiano(lista){
+  const pf = (lista || []).filter(a => a && a.nome && isFinite(a.k));
+  const doppi = new Set(pf.map(a => norm(a.nome)));
+  CAT = pf.concat(F.filter(f => !doppi.has(norm(f.nome))));
+  IDX = CAT.map(f => ({ f, n: norm(f.nome) }));
+  BYNAME2 = new Map(); for (const f of CAT){ BYNAME2.set(f.nome.toLowerCase(), f); if (!BYNAME2.has(norm(f.nome))) BYNAME2.set(norm(f.nome), f); }
+}
 
 const RX = [
  ["piatto", /pasta al|pasta all|pasta alle|risotto|lasagna|parmigiana|frittata|minestron|minestre|rag(u|ù)|sugo di|pesto|besciamella|falafel|hummus|tabul|involtini|nachos|sarmale|baccal|brasato|spezzatino|scaloppina|gateau|pomodori al riso|riso al|riso burro|riso cantonese|polenta al|gnocchi al|ravioli al|trota al|sogliola al|spigola al|merluzzo in|alici al|alici marinate|pollo all|pollo alle|maiale in|gamberetti con|carciofi alla|pizza|panino|cheese burger|hamburger|kebab|chicken nuggets|pasta e fagioli|pastiera|castagnaccio|nuvole di gamberi|ravioli, |tortellini|torta |cannoli|pan di spagna|crostata|savoiardi|merendine|gelato|sorbetto|ghiacciolo/],
@@ -121,7 +130,11 @@ const RX = [
  ["cereali", /pasta|riso|farro|orzo|quinoa|miglio|mais|couscous|semola|farina|avena|frumento|grano|polenta|corn flakes|muesli|crusca|germe|gnocchi|biscotti|amido|fecola|pop corn|patatine/],
  ["vegetali", /verdur|insalata|lattuga|lattughino|spinaci|bieta|carciof|zucchin|zucca|melanzan|peperon|pomodor|carote|cipoll|cavol|broccol|finocchi|fagiolini|funghi|asparag|cicoria|radicchio|rucola|sedano|porri|patate|rape|ravanelli|indivia|scarola|agretti|cardi|topinambur|germogli|prezzemolo|basilico|salvia|rosmarino|menta|aglio|barbabietole|cetrioli|tarassaco|vegetali misti|fiori di zucca|peperoncini/]
 ];
-function gruppo(nome){
+const CATPIANO = { cereali:"cereali", carne:"carne", pesce:"pesce", latticini:"latticini", legumi:"legumi",
+  verdura:"vegetali", frutta:"frutta", frutta_secca_semi:"fruttasecca", grassi:"grassi", uova:"uova",
+  proteine_vegetali:"legumi", integratori:"altro", bevande:"altro" };
+function gruppo(nome, cat){
+  if (cat && CATPIANO[cat]) return CATPIANO[cat];
   const n = norm(nome);
   for (const [g, rx] of RX) if (rx.test(n)) return g;
   return "altro";
@@ -133,7 +146,7 @@ const LIM = {
 };
 function limiti(f){
   const n = norm(f.nome);
-  let g = gruppo(f.nome);
+  let g = gruppo(f.nome, f.cat);
   if (g === "uova" && /albume|tuorlo/.test(n)) return [20, 200, 5];
   if (g === "grassi") return /^oliv/.test(n) ? [10, 80, 5] : [0, 20, 1];
   if (g === "legumi" && /secch/.test(n) && !/cott|bollit|scatola/.test(n)) g = "legumisecchi";
@@ -179,8 +192,8 @@ function valuta(target, voci){
   const m = macro(voci), d = delta(target, m);
   return { voci, m, d, ok: entro(target, d), err: errore(target, d), grammi: voci.reduce((s,v)=>s+v.g,0) };
 }
-const ADJ = ["Olio di oliva extra vergine", "Uova di gallina, albume", "Pane bianco"];
-function correttori(){ return ADJ.map(n => BYNAME.get(n.toLowerCase())).filter(Boolean); }
+const ADJ = ["Olio EVO", "Olio di oliva extra vergine", "Albume", "Uova di gallina, albume", "Pane bianco"];
+function correttori(){ const v = ADJ.map(n => BYNAME2.get(n.toLowerCase())).filter(Boolean); const visti = new Set(); return v.filter(f => { const g = gruppo(f.nome, f.cat); if (visti.has(g)) return false; visti.add(g); return true; }); }
 function proposte(target, f){
   const out = [];
   const lim = limiti(f);
@@ -203,9 +216,9 @@ function proposte(target, f){
 function sostituti(target, escludi){
   const perGruppo = new Map();
   const esc = new Set((escludi||[]).map(n => n.toLowerCase()));
-  for (const f of F){
+  for (const f of CAT){
     if (f.warn || esc.has(f.nome.toLowerCase()) || ESCLUDI_SOST.test(norm(f.nome))) continue;
-    const g = gruppo(f.nome);
+    const g = gruppo(f.nome, f.cat);
     if (!ETICHETTA.includes(g) || g === "grassi") continue;
     const p = proposte(target, f);
     if (!p.length) continue;
@@ -246,8 +259,8 @@ function integra(target, disponibili){
   if (base.ok) return { base, finale: base, aggiunte: [] };
   const libero = liberi.length === 1 ? liberi[0].f : null;
   let migliore = null;
-  for (const f of F){
-    if (f.warn || !ETICHETTA.includes(gruppo(f.nome)) || ESCLUDI_SOST.test(norm(f.nome))) continue;
+  for (const f of CAT){
+    if (f.warn || !ETICHETTA.includes(gruppo(f.nome, f.cat)) || ESCLUDI_SOST.test(norm(f.nome))) continue;
     if (disponibili.some(v => v.f.nome === f.nome)) continue;
     let prova = null;
     if (libero){
@@ -281,7 +294,7 @@ const dK = x => (Math.round(x) > 0 ? "+" : (Math.round(x) < 0 ? "\u2212" : "")) 
 function cerca(q, n){
   const s = norm(q); if (s.length < 2) return [];
   const out = [];
-  for (const it of NORMIDX){ const i = it.n.indexOf(s); if (i >= 0) out.push([i, it.f]); }
+  for (const it of IDX){ const i = it.n.indexOf(s); if (i >= 0) out.push([i, it.f]); }
   out.sort((a,b) => a[0]-b[0] || a[1].nome.length - b[1].nome.length);
   return out.slice(0, n || 8).map(x => x[1]);
 }
@@ -325,15 +338,16 @@ async function salvaProdotto(pr){
   if (DBC){ try { await DBC.collection("data/prodotti").doc(pr.ean || pr.nome.replace(/[^a-z0-9]+/gi,"_").slice(0,80)).set(pr); } catch(e){} }
 }
 function aggiornaPreferiti(){
+  impostaAlimentiPiano(S.piano && S.piano.alimenti);
   const s = new Set();
-  if (S.piano) for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci) if (v.crea) s.add(v.crea);
+  if (S.piano) for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci){ if (v.crea) s.add(v.crea); s.add(v.nome); }
   for (const p of S.prodotti) s.add(p.nome);
   PREFERITI = s;
 }
 function trovaAlimento(nome){
   const p = S.prodotti.find(x => norm(x.nome) === norm(nome));
   if (p) return { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g, etichetta: true };
-  const f = BYNAME.get((nome||"").toLowerCase()); if (f) return f;
+  const f = BYNAME2.get((nome||"").toLowerCase()); if (f) return f;
   const c = cerca(nome, 1); return c[0] || null;
 }
 /* ---------- helper DOM ---------- */
@@ -456,6 +470,30 @@ async function chiediClaude(prompt, opts){
   if (!SAMPLE) throw { code: "not_granted" };
   return await SAMPLE.json(prompt, opts || {});
 }
+function convertiPianoEsterno(d){
+  if (!Array.isArray(d.piano_settimana) || !d.piano_settimana.length) throw new Error("manca il piano settimanale");
+  const idx = new Map((d.alimenti || []).map(a => [a.id, a]));
+  const alimenti = (d.alimenti || []).map(a => {
+    const v = a.per_100 || {};
+    return { nome: a.nome || a.id, id: a.id, cat: a.categoria, piano: true,
+             k: +v.kcal, p: +v.p, c: +v.c, g: +v.g, warn: !atwaterOk(+v.kcal, +v.p, +v.c, +v.g) };
+  }).filter(a => isFinite(a.k) && isFinite(a.p) && isFinite(a.c) && isFinite(a.g));
+  if (!alimenti.length) throw new Error("nessun alimento valido");
+  const cap = s => String(s || "").charAt(0).toUpperCase() + String(s || "").slice(1);
+  const giorni = d.piano_settimana.map(g => ({
+    giorno: cap(g.giorno), attivita: cap(g.tipo),
+    totali: g.totali ? [g.totali.kcal, g.totali.p, g.totali.c, g.totali.g] : null,
+    pasti: (g.pasti || []).map(p => ({ ora: p.ora, nome: p.nome,
+      voci: (p.voci || []).map(v => { const a = idx.get(v.alimento);
+        if (!(+v.q > 0)) throw new Error("quantit\u00e0 non valida in " + (g.giorno || ""));
+        return { nome: (a && a.nome) || v.alimento, g: Math.round(+v.q) }; }) }))
+  }));
+  const sost = (d.sostituzioni || []).map(s => ({
+    da: (idx.get(s.da.alimento) || {}).nome || s.da.alimento, g: +s.da.g,
+    a: (s.a || []).map(x => ({ nome: (idx.get(x.alimento) || {}).nome || x.alimento, g: +x.g })) }));
+  return { titolo: "Piano fase " + ((d.meta && d.meta.fase) || "") , giorni, alimenti, sostituzioni: sost,
+           vincoli: d.vincoli || null, target: d.target_giornalieri || null, origine: "piano" };
+}
 function esportaBackup(){
   const dati = { app:"sostituzioni-alimenti", versione:1, data:new Date().toISOString(), piano:S.piano, prodotti:S.prodotti };
   const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(dati)], { type:"application/json" })),
@@ -463,12 +501,12 @@ function esportaBackup(){
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
 }
 function importaBackup(){
-  const i = el("input", { type:"file", accept:"application/json,.json", class:"hide" });
+  const i = el("input", { type:"file", class:"hide", style:"position:absolute;left:-9999px;opacity:0" });
   i.addEventListener("change", async () => {
     const f = i.files && i.files[0]; if (!f) return;
     try {
       const d = JSON.parse(await f.text());
-      const piano = d.piano || (d.giorni ? d : null);
+      const piano = (d.piano_settimana && d.alimenti) ? convertiPianoEsterno(d) : (d.piano || (d.giorni ? d : null));
       if (piano && Array.isArray(piano.giorni) && piano.giorni.length){
         for (const g of piano.giorni){ if (!Array.isArray(g.pasti)) throw 0;
           for (const p of g.pasti) for (const v of p.voci){ if (typeof v.nome !== "string" || !(+v.g > 0)) throw 0; v.g = Math.round(+v.g); } }
@@ -476,7 +514,7 @@ function importaBackup(){
       }
       if (Array.isArray(d.prodotti)) for (const p of d.prodotti) if (p && p.nome && atwaterOk(+p.k, +p.p, +p.c, +p.g)) await salvaProdotto(p);
       render();
-    } catch(e){ alert("File non valido: nessun dato importato."); }
+    } catch(e){ alert("File non importato: " + (e && e.message ? e.message : "formato non riconosciuto") + "."); }
   });
   document.body.appendChild(i); i.click(); setTimeout(() => i.remove(), 120000);
 }
@@ -486,9 +524,11 @@ function avviso(testo, tipo){ return el("div", { class:"banner " + (tipo||"w") }
 <script>
 "use strict";
 function risolvi(voce){
-  if (voce.crea){ const f = BYNAME.get(voce.crea.toLowerCase()); if (f) return f; }
   const p = S.prodotti.find(x => norm(x.nome) === norm(voce.nome));
   if (p) return { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g, etichetta: true };
+  let f = BYNAME2.get(norm(voce.nome)) || BYNAME2.get((voce.nome || "").toLowerCase());
+  if (f) return f;
+  if (voce.crea){ f = BYNAME2.get(voce.crea.toLowerCase()) || BYNAME.get(voce.crea.toLowerCase()); if (f) return f; }
   return null;
 }
 function macroPasto(pasto){
@@ -543,6 +583,17 @@ function vistaSost(){
       el("p", { class:"small", text: "Tolleranza \u00b1" + Math.round(tolK(r.target[0])) + " kcal e \u00b14 g per macro. Nei risultati la banda chiara \u00e8 la tolleranza, il punto \u00e8 lo scostamento." })
     ]);
     out.push(ref);
+    const tab = (S.piano && S.piano.sostituzioni || []).filter(s => norm(s.da) === norm(r.voce.f.nome) && s.g > 0);
+    if (tab.length){
+      const card3 = el("article", { class:"card", style:"gap:0;padding:2px 16px" });
+      const s0 = tab[0], fatt = r.voce.g / s0.g;
+      s0.a.forEach((x, i) => card3.appendChild(el("div", { class:"item", style: i ? "" : "border-top:0" }, [
+        el("span", { text: x.nome, style:"overflow:hidden;text-overflow:ellipsis" }),
+        el("span", { class:"num", style:"font-weight:600", text: Math.round(x.g * fatt / 5) * 5 + " g" })])));
+      out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [
+        el("h3", { text:"Dalla tua tabella di sostituzioni" }), card3,
+        el("p", { class:"small", text:"Grammature del tuo piano, riproporzionate su " + r.voce.g + " g." })]));
+    }
     const trovati = r.gruppi.reduce((s,g) => s + g.ok.length, 0);
     const senza = r.gruppi.filter(g => !g.ok.length).length;
     out.push(el("div", {}, [el("h2", { style:"font-size:22px", text:"Sostituti" }),
