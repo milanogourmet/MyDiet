@@ -351,10 +351,13 @@ async function salvaPiano(p){
 async function salvaProdotto(pr){
   S.prodotti = S.prodotti.filter(x => x.nome !== pr.nome && (!pr.ean || x.ean !== pr.ean)).concat([pr]);
   local.set("prodotti", S.prodotti);
+  aggiornaPreferiti();
   if (DBC){ try { await DBC.collection("data/prodotti").doc(pr.ean || pr.nome.replace(/[^a-z0-9]+/gi,"_").slice(0,80)).set(pr); } catch(e){} }
 }
 function aggiornaPreferiti(){
-  impostaAlimentiPiano(S.piano && S.piano.alimenti);
+  const daPiano = (S.piano && S.piano.alimenti) || [];
+  const daProdotti = S.prodotti.map(x => ({ nome: x.nome, k: x.k, p: x.p, c: x.c, g: x.g, etichetta: true }));
+  impostaAlimentiPiano(daProdotti.concat(daPiano));
   const s = new Set();
   if (S.piano) for (const g of S.piano.giorni) for (const p of g.pasti) for (const v of p.voci){ if (v.crea) s.add(v.crea); s.add(v.nome); }
   for (const p of S.prodotti) s.add(p.nome);
@@ -540,7 +543,7 @@ function avviso(testo, tipo){ return el("div", { class:"banner " + (tipo||"w") }
 <script>
 "use strict";
 function risolvi(voce){
-  const p = S.prodotti.find(x => norm(x.nome) === norm(voce.nome));
+  const p = S.prodotti.find(x => norm(x.nome) === norm(voce.nome) || (x.pianoNome && norm(x.pianoNome) === norm(voce.nome)));
   if (p) return { nome: p.nome, k: p.k, p: p.p, c: p.c, g: p.g, etichetta: true };
   let f = BYNAME2.get(norm(voce.nome)) || BYNAME2.get((voce.nome || "").toLowerCase());
   if (f) return f;
@@ -769,7 +772,7 @@ function vistaEtichetta(){
         el("span", { style:"font-weight:600", text: m.nome }),
         el("span", { class:"small", text: m.usi.slice(0,3).join(" \u00b7 ") })
       ]),
-      el("span", { class:"tag w", text:"da fotografare" })
+      el("button", { type:"button", class:"mini", text:"Collega", onclick(){ formProdotto({ nome: m.nome, pianoNome: m.nome }); } })
     ])));
     out.push(el("section", { style:"display:flex;flex-direction:column;gap:8px" }, [
       el("div", { class:"between" }, [el("h3", { text:"Da acquisire dal tuo piano" }), el("span", { class:"small num", text: String(manca.length) })]), card]));
@@ -803,16 +806,47 @@ function formProdotto(p){
   const gr = el("div", { style:"display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px" }, [
     campo("k", "Energia (kcal)", p.k, 1), campo("p", "Proteine (g)", p.p, 1), campo("c", "Carboidrati (g)", p.c, 1), campo("g", "Grassi (g)", p.g, 1)]);
   d.appendChild(gr);
-  const msg = el("p", { class:"small" });
+  const senza = daEtichetta().map(x => x.nome);
+  const sel = el("select", { id:"associa" });
+  sel.appendChild(el("option", { value:"", text:"Nessuna" }));
+  const gia = p.pianoNome && senza.indexOf(p.pianoNome) < 0 ? [p.pianoNome] : [];
+  for (const n of gia.concat(senza)) sel.appendChild(el("option", { value: n, text: n, selected: p.pianoNome === n ? "selected" : null }));
+  d.appendChild(el("div", { style:"display:flex;flex-direction:column;gap:6px" }, [
+    el("label", { for:"associa", text:"Voce del piano a cui corrisponde" }), sel,
+    el("p", { class:"small", text:"Collegandolo, i pasti del piano useranno questi valori." })]));
+  const msg = el("p", { class:"small", style:"color:var(--no);font-weight:600" });
   d.appendChild(msg);
-  d.appendChild(el("button", { type:"button", class:"btn", text:"Salva prodotto", async onclick(){
-    const n = (campi.nome.value || "").trim();
-    const num = k => parseFloat((campi[k].value || "").replace(",", "."));
-    const pr = { nome: n, ean: (campi.ean.value || "").trim(), k: num("k"), p: num("p"), c: num("c"), g: num("g") };
-    if (!n || [pr.k, pr.p, pr.c, pr.g].some(x => !isFinite(x))){ msg.textContent = "Compila nome e quattro valori."; return; }
-    if (!atwaterOk(pr.k, pr.p, pr.c, pr.g)){ msg.textContent = "I valori non tornano: le kcal non corrispondono ai macro. Controlla l\u2019etichetta."; return; }
-    await salvaProdotto(pr); render();
-  } }));
+  const forza = el("button", { type:"button", class:"btn2 hide", text:"Salva comunque" });
+  const salva = el("button", { type:"button", class:"btn", text:"Salva prodotto" });
+  d.appendChild(salva); d.appendChild(forza);
+  function mostra(t, conForza){
+    msg.textContent = t;
+    forza.classList.toggle("hide", !conForza);
+    try { msg.scrollIntoView({ block:"center" }); } catch(e){}
+  }
+  async function esegui(forzato){
+    try {
+      const n = (campi.nome.value || "").trim();
+      const num = k => parseFloat(String(campi[k].value || "").replace(",", ".").replace(/[^\d.]/g, ""));
+      const pr = { nome: n, ean: (campi.ean.value || "").replace(/\D/g, ""), k: num("k"), p: num("p"), c: num("c"), g: num("g"), pianoNome: sel.value || "" };
+      const mancanti = [];
+      if (!n) mancanti.push("nome del prodotto");
+      for (const [k, et] of [["k","energia"],["p","proteine"],["c","carboidrati"],["g","grassi"]]) if (!isFinite(pr[k])) mancanti.push(et);
+      if (mancanti.length){ mostra("Manca " + mancanti.join(", ") + "."); return; }
+      if (!forzato && !atwaterOk(pr.k, pr.p, pr.c, pr.g)){
+        mostra("Dai macro risultano " + Math.round(4*pr.p + 4*pr.c + 9*pr.g) + " kcal invece di " + Math.round(pr.k) + ". Controlla l\u2019etichetta oppure salva comunque.", true);
+        return;
+      }
+      salva.disabled = true; salva.textContent = "Salvo\u2026";
+      await Promise.race([salvaProdotto(pr), new Promise(r => setTimeout(r, 4000))]);
+      S.modale = null; S.tab = "eti"; render();
+    } catch(e){
+      salva.disabled = false; salva.textContent = "Salva prodotto";
+      mostra("Non salvato: " + ((e && e.message) || e) + ".");
+    }
+  }
+  salva.addEventListener("click", () => esegui(false));
+  forza.addEventListener("click", () => esegui(true));
   S.modale = d; render();
 }
 function fileInput(cb, capture){
